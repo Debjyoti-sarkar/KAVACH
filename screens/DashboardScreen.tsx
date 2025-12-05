@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Switch, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useTTS } from "@/hooks/useTTS";
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -18,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWakeWord } from "@/hooks/useWakeWord";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -26,338 +29,412 @@ const MENU_ITEM_SIZE = 70;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-interface MenuItemProps {
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  color: string;
-  onPress: () => void;
-  size?: number;
-}
-
-function MenuItem({ icon, label, color, onPress, size = MENU_ITEM_SIZE }: MenuItemProps) {
-  const { theme } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={() => {
-        scale.value = withSpring(0.92, { damping: 15, stiffness: 200 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      }}
-      style={[styles.menuItem, animatedStyle]}
-    >
-      <View
-        style={[
-          styles.menuIconContainer,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: color,
-          },
-          Shadows.md,
-        ]}
-      >
-        <Feather name={icon} size={size * 0.4} color="#FFFFFF" />
-      </View>
-      <ThemedText type="caption" style={[styles.menuLabel, { color: theme.textSecondary }]}>
-        {label}
-      </ThemedText>
-    </AnimatedPressable>
-  );
-}
-
-function VoiceAssistantButton({ onPress }: { onPress: () => void }) {
-  const { theme } = useTheme();
-  const { t } = useLanguage();
-  const scale = useSharedValue(1);
-  const pulseScale = useSharedValue(1);
-
-  React.useEffect(() => {
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value * pulseScale.value }],
-  }));
-
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={() => {
-        scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      }}
-      style={[
-        styles.voiceAssistantButton,
-        { backgroundColor: NexaVaultColors.voiceAssistant },
-        Shadows.lg,
-        animatedStyle,
-      ]}
-    >
-      <Feather name="mic" size={32} color="#FFFFFF" />
-      <ThemedText style={styles.voiceLabel}>{t("voiceAssistant").toUpperCase()}</ThemedText>
-    </AnimatedPressable>
-  );
-}
-
-function SOSButton({ onPress }: { onPress: () => void }) {
-  const { t } = useLanguage();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={() => {
-        scale.value = withSpring(0.9, { damping: 15, stiffness: 200 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      }}
-      style={[
-        styles.sosButton,
-        { backgroundColor: NexaVaultColors.sos },
-        Shadows.md,
-        animatedStyle,
-      ]}
-    >
-      <Feather name="alert-triangle" size={16} color="#FFFFFF" />
-      <ThemedText style={styles.sosText}>SOS</ThemedText>
-    </AnimatedPressable>
-  );
-}
-
-function FraudStatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  value: number;
-  color: string;
-}) {
-  const { theme } = useTheme();
-
-  return (
-    <View style={[styles.fraudStatCard, { backgroundColor: theme.card }]}>
-      <View style={[styles.fraudStatIcon, { backgroundColor: color + "20" }]}>
-        <Feather name={icon} size={16} color={color} />
-      </View>
-      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-        {label}
-      </ThemedText>
-      <View style={[styles.fraudStatDot, { backgroundColor: value > 0 ? NexaVaultColors.success : theme.border }]} />
-    </View>
-  );
-}
-
 export default function DashboardScreen() {
-  const { theme, isDark } = useTheme();
+  const { speak } = useTTS();
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
-  const { voiceGuideEnabled, toggleVoiceGuide, isOnline, setOnlineStatus } = useAuth();
+  const { voiceGuideEnabled, toggleVoiceGuide, isOnline, setOnlineStatus, userData } = useAuth();
+
+  // Wake word: "Hey Nexa"
+  useWakeWord(() => {
+    speak("Opening Voice Assistant");
+    navigation.navigate("VoiceAssistant");
+  });
 
   const accountBalance = 5250.75;
 
+  /* ---------------------------- SOS BUTTON --------------------------- */
+  function SOSButton({ onPress }: { onPress: () => void }) {
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+    }));
+
+    return (
+      <AnimatedPressable
+        onPress={() => {
+          speak("SOS Emergency");
+          onPress();
+        }}
+        onPressIn={() => (scale.value = withSpring(0.9))}
+        onPressOut={() => (scale.value = withSpring(1))}
+        style={[styles.sosButton, { backgroundColor: NexaVaultColors.sos }, Shadows.md, animatedStyle]}
+      >
+        <Feather name="alert-triangle" size={16} color="#FFFFFF" />
+        <ThemedText style={styles.sosText}>SOS</ThemedText>
+      </AnimatedPressable>
+    );
+  }
+
+  /* --------------------------- MAIN SCREEN ---------------------------- */
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.backgroundRoot,
-          paddingTop: insets.top + 60,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
-    >
-      <View style={styles.topBar}>
-        <SOSButton onPress={() => navigation.navigate("SOS")} />
-
-        <View style={styles.topBarRight}>
-          <View style={styles.voiceGuideToggle}>
-            <Feather
-              name="volume-2"
-              size={16}
-              color={voiceGuideEnabled ? NexaVaultColors.primary : theme.textSecondary}
-            />
-            <ThemedText type="caption" style={{ marginLeft: Spacing.xs, color: theme.textSecondary }}>
-              {voiceGuideEnabled ? "ON" : "OFF"}
-            </ThemedText>
+    <View style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: insets.top + 60, paddingBottom: insets.bottom + Spacing.xl }}
+      >
+        <View style={styles.container}>
+          {/* ----------------------------- HEADER WITH CONTROLS ------------------------------ */}
+          <View style={styles.headerControls}>
+            <SOSButton onPress={() => navigation.navigate("SOS")} />
+            <Pressable
+              onPress={() => {
+                speak("Settings");
+                navigation.navigate("Settings");
+              }}
+              style={styles.iconButton}
+            >
+              <Feather name="settings" size={22} color="#333" />
+            </Pressable>
           </View>
-          <Pressable
-            onPress={() => navigation.navigate("Settings")}
-            style={[styles.settingsButton, { backgroundColor: theme.backgroundSecondary }]}
+
+        {/* ----------------------------- CARDS SECTION ------------------------------ */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cardsContainer}
+        >
+          {/* Bank Account Card */}
+          {userData?.bankName && (
+            <View style={[styles.card, { backgroundColor: "#4CAF50" }]}>
+              <View style={styles.cardContent}>
+                <View>
+                  <ThemedText type="caption" style={{ color: "#FFF" }}>{userData.bankName}</ThemedText>
+                  <ThemedText type="small" style={{ color: "#FFF", marginTop: 4 }}>{userData.bankAccountMasked}</ThemedText>
+                </View>
+                <ThemedText type="h4" style={{ color: "#FFF" }}>
+                  ₹ {accountBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </ThemedText>
+              </View>
+              <Feather name="check-circle" size={20} color="#FFF" style={{ position: 'absolute', top: 16, right: 16 }} />
+            </View>
+          )}
+
+          {/* Add Card Placeholder */}
+          <Pressable 
+            style={[styles.card, styles.addCard]}
+            onPress={() => {
+              speak("Add Bank Account");
+              navigation.navigate("BankLinking");
+            }}
           >
-            <Feather name="settings" size={18} color={theme.text} />
+            <Feather name="plus" size={32} color="#999" />
+            <ThemedText type="small" style={{ color: "#999", marginTop: 8 }}>Add Bank</ThemedText>
           </Pressable>
-        </View>
-      </View>
+        </ScrollView>
 
-      <View style={styles.languageSection}>
-        <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-          {t("languageSelection")}
-        </ThemedText>
-        <View style={styles.languageButtons}>
-          <View style={[styles.langButton, { backgroundColor: NexaVaultColors.warning }]}>
-            <ThemedText style={styles.langButtonText}>ଓଡ଼ିଆ</ThemedText>
-          </View>
-          <View style={[styles.langButton, { backgroundColor: NexaVaultColors.primary }]}>
-            <ThemedText style={styles.langButtonText}>English</ThemedText>
-          </View>
-        </View>
-        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          {t("appWillSpeak")}
-        </ThemedText>
-      </View>
+        {/* ----------------------------- VOICE & NETWORK CONTROLS ------------------------------ */}
+        <View style={styles.section}>
+          <View style={styles.controlsRow}>
+            <Pressable
+              onPress={() => {
+                speak("Voice Assistant");
+                navigation.navigate("VoiceAssistant");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
+            >
+              <Feather name="mic" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>VOICE ASSISTANT</ThemedText>
+            </Pressable>
 
-      <View style={styles.dashboardHeader}>
-        <View style={styles.voiceGuideIndicator}>
-          <Feather name="play-circle" size={16} color={theme.textSecondary} />
-          <ThemedText type="caption" style={{ marginLeft: Spacing.xs, color: theme.textSecondary }}>
-            {t("voiceGuide")}: {voiceGuideEnabled ? "ON" : "OFF"}
-          </ThemedText>
-        </View>
-        <ThemedText type="h4">{t("homeDashboard")}</ThemedText>
-      </View>
+            <Pressable
+              onPress={() => {
+                speak("Scanner");
+                navigation.navigate("OfflineOtp");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#FF9800" }]}
+            >
+              <Feather name="camera" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>Scanner</ThemedText>
+            </Pressable>
 
-      <View style={styles.menuContainer}>
-        <View style={styles.menuRow}>
-          <MenuItem
-            icon="search"
-            label={t("scanForFraud")}
-            color={NexaVaultColors.success}
-            onPress={() => navigation.navigate("FraudScan")}
-          />
-          <MenuItem
-            icon="send"
-            label={t("sendMoney")}
-            color={NexaVaultColors.primary}
-            onPress={() => navigation.navigate("SendMoney")}
-          />
-          <View style={styles.balanceContainer}>
-            <MenuItem
-              icon="credit-card"
-              label=""
-              color={NexaVaultColors.info}
-              onPress={() => navigation.navigate("Balance")}
-              size={60}
-            />
+            <Pressable
+              onPress={() => {
+                speak("Recent Activity");
+                navigation.navigate("TransactionHistory");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#FFC107" }]}
+            >
+              <Feather name="clock" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>RECENT{"\n"}ACTIVITY</ThemedText>
+            </Pressable>
           </View>
         </View>
 
-        <View style={styles.centerSection}>
-          <View style={styles.balanceDisplay}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              {t("accountBalance").toUpperCase()}:
-            </ThemedText>
-            <ThemedText type="h2" style={styles.balanceAmount}>
-              ₹ {accountBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </ThemedText>
+        {/* ----------------------------- QUICK ACTIONS ------------------------------ */}
+        <View style={styles.section}>
+          <View style={styles.controlsRow}>
+            <Pressable
+              onPress={() => {
+                speak("Scan for Fraud");
+                navigation.navigate("FraudScan");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#4CAF50" }]}
+            >
+              <Feather name="search" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>SCAN MESSAGE{"\n"}FOR FRAUD</ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                speak("Send Money");
+                navigation.navigate("SendMoney");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
+            >
+              <Feather name="send" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>SEND MONEY</ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                speak("Balance");
+                navigation.navigate("Balance");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#03A9F4" }]}
+            >
+              <Feather name="credit-card" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>Balance</ThemedText>
+            </Pressable>
           </View>
         </View>
 
-        <View style={styles.menuRow}>
-          <MenuItem
-            icon="lock"
-            label={t("offlineOtp")}
-            color={NexaVaultColors.warning}
-            onPress={() => navigation.navigate("OfflineOtp")}
-          />
-          <VoiceAssistantButton onPress={() => navigation.navigate("VoiceAssistant")} />
-          <MenuItem
-            icon="clock"
-            label={t("recentActivity")}
-            color={NexaVaultColors.recentActivity}
-            onPress={() => navigation.navigate("TransactionHistory")}
-          />
-        </View>
-      </View>
+        {/* ----------------------------- TRANSACTIONS CHART ------------------------------ */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="h4" style={{ color: "#1A1A1A" }}>Transactions in December</ThemedText>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable style={[styles.filterChip, { backgroundColor: "#1A1A1A" }]}>
+                <ThemedText type="caption" style={{ color: "#FFF" }}>Spending</ThemedText>
+              </Pressable>
+              <Pressable style={styles.filterChip}>
+                <ThemedText type="caption" style={{ color: "#666" }}>Deposits</ThemedText>
+              </Pressable>
+            </View>
+          </View>
 
-      <View style={styles.fraudDashboard}>
-        <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-          {t("miniFraudDashboard")}
-        </ThemedText>
-        <View style={styles.fraudStats}>
-          <FraudStatCard icon="message-square" label={t("sms")} value={1} color={NexaVaultColors.info} />
-          <FraudStatCard icon="smartphone" label={t("device")} value={1} color={NexaVaultColors.success} />
-          <FraudStatCard icon="repeat" label={t("transactions")} value={0} color={NexaVaultColors.warning} />
-          <FraudStatCard icon="shield" label={t("service")} value={1} color={NexaVaultColors.primary} />
-        </View>
-      </View>
+          <View style={styles.chartContainer}>
+            {/* Donut Chart Placeholder */}
+            <View style={styles.donutChart}>
+              <View style={styles.donutHole}>
+                <ThemedText type="caption" style={{ color: "#999" }}>Total spending</ThemedText>
+                <ThemedText type="h4" style={{ color: "#1A1A1A" }}>₹ 2,683.21</ThemedText>
+              </View>
+            </View>
 
-      <View style={styles.networkStatus}>
-        <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-          {t("networkStatus")}
-        </ThemedText>
-        <View style={styles.networkToggle}>
-          <Feather
-            name={isOnline ? "wifi" : "wifi-off"}
-            size={18}
-            color={isOnline ? NexaVaultColors.success : theme.textSecondary}
-          />
-          <ThemedText
-            type="small"
-            style={[
-              styles.networkLabel,
-              { color: isOnline ? NexaVaultColors.primary : theme.textSecondary },
-            ]}
-          >
-            {t("online")}
-          </ThemedText>
-          <Switch
-            value={isOnline}
-            onValueChange={setOnlineStatus}
-            trackColor={{ false: theme.border, true: NexaVaultColors.primary + "60" }}
-            thumbColor={isOnline ? NexaVaultColors.primary : theme.backgroundSecondary}
-          />
-          <ThemedText
-            type="small"
-            style={[
-              styles.networkLabel,
-              { color: !isOnline ? NexaVaultColors.warning : theme.textSecondary },
-            ]}
-          >
-            {t("offline")}
-          </ThemedText>
+            {/* Categories */}
+            <View style={styles.categories}>
+              <View style={styles.categoryTag}>
+                <View style={[styles.categoryDot, { backgroundColor: "#64B5F6" }]} />
+                <ThemedText type="caption" style={{ color: "#666" }}>Food 31%</ThemedText>
+              </View>
+              <View style={styles.categoryTag}>
+                <View style={[styles.categoryDot, { backgroundColor: "#FFB74D" }]} />
+                <ThemedText type="caption" style={{ color: "#666" }}>Learning 24%</ThemedText>
+              </View>
+              <View style={styles.categoryTag}>
+                <View style={[styles.categoryDot, { backgroundColor: "#FFD54F" }]} />
+                <ThemedText type="caption" style={{ color: "#666" }}>Health 20%</ThemedText>
+              </View>
+              <View style={styles.categoryTag}>
+                <View style={[styles.categoryDot, { backgroundColor: "#81C784" }]} />
+                <ThemedText type="caption" style={{ color: "#666" }}>Taxi 16%</ThemedText>
+              </View>
+              <View style={styles.categoryTag}>
+                <View style={[styles.categoryDot, { backgroundColor: "#BA68C8" }]} />
+                <ThemedText type="caption" style={{ color: "#666" }}>Online shopping 9%</ThemedText>
+              </View>
+            </View>
+          </View>
         </View>
       </View>
+      </ScrollView>
     </View>
   );
 }
+
+/* ------------------------------ STYLES ------------------------------ */
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.lg,
   },
-  topBar: {
+  headerControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+    backgroundColor: "#F5F7FA",
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.sm,
+  },
+  balanceSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  mainBalance: {
+    fontSize: 40,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  currencyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#F5F7FA",
+    borderRadius: 20,
+  },
+  cardsContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xl,
+    gap: Spacing.md,
+  },
+  card: {
+    width: 180,
+    height: 140,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginRight: Spacing.md,
+    ...Shadows.md,
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  cardChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  addCard: {
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#E5E5E5",
+    borderStyle: "dashed",
+  },
+  section: {
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+  },
+  sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.lg,
+  },
+  filterChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+    backgroundColor: "#F5F7FA",
+  },
+  quickActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "#FFF",
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    ...Shadows.sm,
+  },
+  actionButton: {
+    alignItems: "center",
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  actionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionLabel: {
+    fontSize: 9,
+    textAlign: "center",
+    color: "#666",
+    lineHeight: 12,
+  },
+  chartContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    ...Shadows.sm,
+  },
+  donutChart: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 20,
+    borderColor: "#E5E5E5",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    marginBottom: Spacing.lg,
+  },
+  donutHole: {
+    alignItems: "center",
+  },
+  categories: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  categoryTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    backgroundColor: "#F5F7FA",
+    borderRadius: BorderRadius.full,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  controlsRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  controlButton: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.sm,
+    ...Shadows.md,
+  },
+  controlLabel: {
+    color: "#FFF",
+    fontSize: 8,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: Spacing.xs,
+  },
+  bottomActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
   },
   sosButton: {
     flexDirection: "row",
@@ -366,151 +443,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
     gap: Spacing.xs,
+    backgroundColor: NexaVaultColors.sos,
+    ...Shadows.md,
   },
   sosText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
   },
-  topBarRight: {
+  networkToggle: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
   },
   voiceGuideToggle: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  settingsButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  languageSection: {
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  sectionLabel: {
-    marginBottom: Spacing.sm,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  languageButtons: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  langButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.full,
-  },
-  langButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  dashboardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.lg,
-    marginBottom: Spacing.xl,
-  },
-  voiceGuideIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuContainer: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  menuRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.xl,
-  },
-  menuItem: {
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  menuIconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menuLabel: {
-    fontSize: 10,
-    textAlign: "center",
-    maxWidth: 80,
-  },
-  balanceContainer: {
-    alignItems: "center",
-  },
-  centerSection: {
-    alignItems: "center",
-    marginVertical: Spacing.xl,
-  },
-  balanceDisplay: {
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  balanceAmount: {
-    letterSpacing: 1,
-  },
-  voiceAssistantButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  voiceLabel: {
-    color: "#FFFFFF",
-    fontSize: 8,
-    fontWeight: "600",
-    marginTop: Spacing.xs,
-    textAlign: "center",
-  },
-  fraudDashboard: {
-    marginBottom: Spacing.xl,
-  },
-  fraudStats: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: Spacing.sm,
-  },
-  fraudStatCard: {
-    flex: 1,
-    alignItems: "center",
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    gap: Spacing.xs,
-    ...Shadows.sm,
-  },
-  fraudStatIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fraudStatDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  networkStatus: {
-    alignItems: "center",
-  },
-  networkToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  networkLabel: {
-    fontWeight: "500",
+    marginRight: Spacing.md,
   },
 });

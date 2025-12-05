@@ -1,10 +1,11 @@
-import React from "react";
-import { StyleSheet, View, ActivityIndicator } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet, View, ActivityIndicator, AppState } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import * as SecureStore from "expo-secure-store";
 
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -13,13 +14,35 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { NexaVaultColors } from "@/constants/theme";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// ----------------------------------------------------
+// Internal Component – Your main app content
+// ----------------------------------------------------
 function AppContent() {
-  const { isLoading } = useAuth();
+  const { isLoading, requireReauth } = useAuth();
   const { theme, isDark } = useTheme();
+
+  // 🔥 CRUCIAL: Ask for PIN every time the app comes to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        console.log("📲 App returned to foreground → Reauth required");
+        requireReauth();
+      }
+    });
+
+    return () => sub.remove();
+  }, [requireReauth]);
 
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.backgroundRoot },
+        ]}
+      >
         <ActivityIndicator size="large" color={NexaVaultColors.primary} />
       </View>
     );
@@ -35,6 +58,10 @@ function AppContent() {
   );
 }
 
+
+// ----------------------------------------------------
+// Main App Component
+// ----------------------------------------------------
 export default function App() {
   return (
     <ErrorBoundary>
@@ -53,6 +80,8 @@ export default function App() {
   );
 }
 
+
+// ----------------------------------------------------
 const styles = StyleSheet.create({
   root: {
     flex: 1,

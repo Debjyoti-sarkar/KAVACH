@@ -17,6 +17,7 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { saveSecurePin, saveBiometricFlag, saveAadhaar } from "@/utils/secureManager";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -28,7 +29,7 @@ export default function SecuritySetupScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
-  const { setupPin, enableBiometric, linkAadhaar, completeOnboarding } = useAuth();
+  const { setupPin, enableBiometric, linkAadhaar, completeOnboarding, userData } = useAuth();
 
   const [step, setStep] = useState<SetupStep>("biometric");
   const [pin, setPin] = useState("");
@@ -78,6 +79,7 @@ export default function SecuritySetupScreen() {
 
       if (result.success) {
         setBiometricEnabled(true);
+        await saveBiometricFlag(true);
         await enableBiometric(true);
       }
       setStep("pin_create");
@@ -124,11 +126,20 @@ export default function SecuritySetupScreen() {
   };
 
   const handlePinSetupComplete = async (finalPin: string) => {
-    await setupPin(finalPin);
+    await saveSecurePin(finalPin);
+    await setupPin(finalPin); // still update AsyncStorage so app flow doesn't break
+
     setStep("aadhaar");
   };
 
   const handleAadhaarLink = async () => {
+    // Try to persist aadhaar locally (if available on userData). If not available,
+    // proceed with the existing linking flow which may return/verify the aadhaar.
+    const aadhaarNumber = (userData as any)?.aadhaarNumber ?? (userData as any)?.aadhaar ?? null;
+    if (aadhaarNumber) {
+      await saveAadhaar(aadhaarNumber);
+    }
+
     await linkAadhaar();
     await completeOnboarding();
     navigation.reset({

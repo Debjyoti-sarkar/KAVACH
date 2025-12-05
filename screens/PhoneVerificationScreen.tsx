@@ -1,14 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, ActivityIndicator } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withSequence,
-} from "react-native-reanimated";
 
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
 import { ThemedText } from "@/components/ThemedText";
@@ -16,277 +17,208 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendOTP, verifyOTP } from "@/utils/otpManager";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-
-const OTP_LENGTH = 6;
-const RESEND_COOLDOWN = 30;
 
 export default function PhoneVerificationScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
-  const { setPhoneNumber: savePhoneNumber, setAuthStep } = useAuth();
+  const { setPhoneNumber, setAuthStep } = useAuth();
 
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [showOtpInput, setShowOtpInput] = useState(false);
-  const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(""));
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  const otpInputRefs = useRef<(TextInput | null)[]>([]);
-  const shakeAnimation = useSharedValue(0);
+  const [demoOTP, setDemoOTP] = useState<string | null>(null);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
     if (resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
-      }, 1000);
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
     }
-    return () => clearInterval(interval);
   }, [resendTimer]);
 
-  const animatedShake = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeAnimation.value }],
-  }));
-
   const handleSendOtp = async () => {
-    if (phoneNumber.length < 10) {
-      shakeAnimation.value = withSequence(
-        withSpring(-10, { damping: 3, stiffness: 400 }),
-        withSpring(10, { damping: 3, stiffness: 400 }),
-        withSpring(-10, { damping: 3, stiffness: 400 }),
-        withSpring(0, { damping: 3, stiffness: 400 })
-      );
+    if (phone.length !== 10) {
+      Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number");
       return;
     }
-    setShowOtpInput(true);
-    setResendTimer(RESEND_COOLDOWN);
-    setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-  };
 
-  const handleOtpChange = (value: string, index: number) => {
-    if (value.length > 1) {
-      value = value.slice(-1);
-    }
-    
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+    setLoading(true);
+    try {
+      const result = await sendOTP(phone);
 
-    if (value && index < OTP_LENGTH - 1) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-
-    if (newOtp.every((digit) => digit !== "") && newOtp.join("").length === OTP_LENGTH) {
-      handleVerifyOtp(newOtp.join(""));
-    }
-  };
-
-  const handleOtpKeyPress = (key: string, index: number) => {
-    if (key === "Backspace" && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
+      if (result.success && result.otp) {
+        setStep("otp");
+        setResendTimer(60);
+        setDemoOTP(result.otp);
+        
+        Alert.alert(
+          "🎯 OTP Generated",
+          `Your verification code is:\n\n${result.otp}\n\n(No SMS sent)`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert("Error", result.error || "Failed to generate OTP");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (otpCode: string) => {
-    setIsVerifying(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    await savePhoneNumber(phoneNumber);
-    setAuthStep("bank_linking");
-    navigation.navigate("BankLinking");
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      Alert.alert("Invalid OTP", "Please enter the 6-digit OTP");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await verifyOTP(phone, otp);
+
+      if (result.success) {
+        await setPhoneNumber(phone);
+        setAuthStep("bank_linking");
+        navigation.navigate("BankLinking");
+      } else {
+        Alert.alert("Verification Failed", result.error || "Invalid OTP");
+        setOtp("");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResendOtp = () => {
-    if (resendTimer === 0) {
-      setResendTimer(RESEND_COOLDOWN);
-      setOtp(new Array(OTP_LENGTH).fill(""));
+    if (resendTimer > 0) return;
+    setOtp("");
+    setDemoOTP(null);
+    handleSendOtp();
+  };
+
+  const handleBack = () => {
+    if (step === "otp") {
+      setStep("phone");
+      setOtp("");
+      setDemoOTP(null);
+      setResendTimer(0);
+    } else {
+      navigation.goBack();
     }
   };
 
   return (
-    <ScreenKeyboardAwareScrollView>
+    <ScreenKeyboardAwareScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name="smartphone" size={48} color={NexaVaultColors.primary} />
-        </View>
-        <ThemedText type="h2" style={styles.title}>
-          {t("verifyNumber")}
-        </ThemedText>
-        <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {showOtpInput
-            ? `${t("enterOtp")} +91 ${phoneNumber}`
-            : "Enter your phone number to receive an OTP"}
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color={theme.text} />
+        </Pressable>
+      </View>
+
+      <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
+        <Feather name="smartphone" size={48} color={NexaVaultColors.primary} />
+      </View>
+
+      <ThemedText type="h2" style={styles.title}>
+        {step === "phone" ? "Phone Verification" : "Enter Code"}
+      </ThemedText>
+
+      <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
+        {step === "phone"
+          ? "We'll generate a 6-digit verification code"
+          : `Enter the code for +91${phone}`}
+      </ThemedText>
+
+      <View style={[styles.demoBanner, { backgroundColor: NexaVaultColors.warning + "20" }]}>
+        <Feather name="info" size={16} color={NexaVaultColors.warning} />
+        <ThemedText type="caption" style={{ color: NexaVaultColors.warning, marginLeft: 8 }}>
+          OTP shown on screen
         </ThemedText>
       </View>
 
-      {!showOtpInput ? (
-        <Animated.View style={[styles.phoneInputContainer, animatedShake]}>
-          <View style={[styles.countryCode, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-            <ThemedText style={styles.countryCodeText}>+91</ThemedText>
+      {step === "phone" ? (
+        <View style={styles.inputSection}>
+          <View style={styles.phoneInputContainer}>
+            <View style={[styles.countryCode, { backgroundColor: theme.backgroundSecondary }]}>
+              <ThemedText style={styles.countryCodeText}>🇮🇳 +91</ThemedText>
+            </View>
+            <TextInput
+              style={[styles.phoneInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+              placeholder="10-digit mobile number"
+              placeholderTextColor={theme.textSecondary}
+              value={phone}
+              onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ""))}
+              keyboardType="phone-pad"
+              maxLength={10}
+              autoFocus
+            />
           </View>
-          <TextInput
-            style={[
-              styles.phoneInput,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.border,
-              },
-            ]}
-            placeholder={t("phoneNumber")}
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="phone-pad"
-            maxLength={10}
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-          />
-        </Animated.View>
+
+          <Button onPress={handleSendOtp} disabled={phone.length !== 10 || loading} style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}>
+            {loading ? <ActivityIndicator color="#FFFFFF" /> : "Generate OTP"}
+          </Button>
+        </View>
       ) : (
-        <View style={styles.otpContainer}>
-          <View style={styles.otpInputRow}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (otpInputRefs.current[index] = ref)}
-                style={[
-                  styles.otpInput,
-                  {
-                    backgroundColor: theme.card,
-                    color: theme.text,
-                    borderColor: digit ? NexaVaultColors.primary : theme.border,
-                  },
-                ]}
-                keyboardType="number-pad"
-                maxLength={1}
-                value={digit}
-                onChangeText={(value) => handleOtpChange(value, index)}
-                onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
-                editable={!isVerifying}
-              />
+        <View style={styles.inputSection}>
+          {demoOTP && (
+            <View style={[styles.demoOtpBox, { backgroundColor: NexaVaultColors.success + "15" }]}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>Your OTP:</ThemedText>
+              <ThemedText type="h1" style={{ color: NexaVaultColors.success, letterSpacing: 8 }}>{demoOTP}</ThemedText>
+            </View>
+          )}
+
+          <View style={styles.otpContainer}>
+            {[0, 1, 2, 3, 4, 5].map((index) => (
+              <View key={index} style={[styles.otpBox, { backgroundColor: theme.card, borderColor: otp.length === index ? NexaVaultColors.primary : theme.border, borderWidth: otp.length === index ? 2 : 1 }]}>
+                <ThemedText type="h3">{otp[index] || ""}</ThemedText>
+              </View>
             ))}
           </View>
 
-          {isVerifying ? (
-            <View style={styles.verifyingContainer}>
-              <ActivityIndicator size="small" color={NexaVaultColors.primary} />
-              <ThemedText type="small" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
-                {t("verifying")}
-              </ThemedText>
-            </View>
-          ) : (
-            <Pressable
-              onPress={handleResendOtp}
-              disabled={resendTimer > 0}
-              style={({ pressed }) => [
-                styles.resendButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <ThemedText
-                type="small"
-                style={{
-                  color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary,
-                }}
-              >
-                {resendTimer > 0
-                  ? `${t("resendOtp")} (${resendTimer}s)`
-                  : t("resendOtp")}
+          <TextInput style={styles.hiddenInput} value={otp} onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ""))} keyboardType="number-pad" maxLength={6} autoFocus />
+
+          <Button onPress={handleVerifyOtp} disabled={otp.length !== 6 || loading} style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}>
+            {loading ? <ActivityIndicator color="#FFFFFF" /> : "Verify OTP"}
+          </Button>
+
+          <View style={styles.resendContainer}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>Didn't see code?</ThemedText>
+            <Pressable onPress={handleResendOtp} disabled={resendTimer > 0}>
+              <ThemedText type="small" style={{ color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary, fontWeight: "600", padding: 8 }}>
+                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Generate New"}
               </ThemedText>
             </Pressable>
-          )}
+          </View>
         </View>
       )}
-
-      {!showOtpInput ? (
-        <Button
-          onPress={handleSendOtp}
-          style={[styles.sendButton, { backgroundColor: NexaVaultColors.primary }]}
-        >
-          {t("sendOtp")}
-        </Button>
-      ) : null}
     </ScreenKeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    alignItems: "center",
-    marginBottom: Spacing["3xl"],
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.xl,
-  },
-  title: {
-    marginBottom: Spacing.sm,
-    textAlign: "center",
-  },
-  subtitle: {
-    textAlign: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  phoneInputContainer: {
-    flexDirection: "row",
-    marginBottom: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  countryCode: {
-    height: 52,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  countryCodeText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  phoneInput: {
-    flex: 1,
-    height: 52,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    fontSize: 18,
-    letterSpacing: 1,
-    ...Shadows.sm,
-  },
-  otpContainer: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  otpInputRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-  },
-  otpInput: {
-    width: 48,
-    height: 56,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 2,
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-    ...Shadows.sm,
-  },
-  verifyingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  resendButton: {
-    padding: Spacing.sm,
-  },
-  sendButton: {
-    marginTop: Spacing.lg,
-  },
+  container: { flexGrow: 1, paddingHorizontal: Spacing.xl },
+  header: { marginBottom: Spacing.xl },
+  backButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  iconContainer: { width: 100, height: 100, borderRadius: 50, alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: Spacing.xl },
+  title: { textAlign: "center", marginBottom: Spacing.sm },
+  subtitle: { textAlign: "center", marginBottom: Spacing.xl },
+  demoBanner: { flexDirection: "row", alignItems: "center", padding: Spacing.md, borderRadius: BorderRadius.sm, marginBottom: Spacing.lg },
+  inputSection: { flex: 1 },
+  phoneInputContainer: { flexDirection: "row", marginBottom: Spacing.xl, gap: Spacing.sm },
+  countryCode: { paddingHorizontal: Spacing.lg, justifyContent: "center", borderRadius: BorderRadius.sm },
+  countryCodeText: { fontSize: 16, fontWeight: "600" },
+  phoneInput: { flex: 1, height: 56, paddingHorizontal: Spacing.lg, borderRadius: BorderRadius.sm, borderWidth: 1, fontSize: 16 },
+  button: { marginBottom: Spacing.lg },
+  demoOtpBox: { padding: Spacing.xl, borderRadius: BorderRadius.md, alignItems: "center", marginBottom: Spacing.xl, ...Shadows.md },
+  otpContainer: { flexDirection: "row", justifyContent: "center", gap: Spacing.sm, marginBottom: Spacing.xl },
+  otpBox: { width: 50, height: 60, alignItems: "center", justifyContent: "center", borderRadius: BorderRadius.sm, ...Shadows.sm },
+  hiddenInput: { position: "absolute", opacity: 0 },
+  resendContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: Spacing.sm, marginTop: Spacing.md },
 });

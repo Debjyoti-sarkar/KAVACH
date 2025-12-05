@@ -142,13 +142,13 @@ export default function SettingsScreen() {
             icon="lock"
             title="Change PIN"
             subtitle="Update your 6-digit PIN"
-            onPress={() => {}}
+            onPress={() => navigation.navigate("ChangePin")}
           />
           <SettingsItem
             icon="smartphone"
             title="Biometric Authentication"
             subtitle={userData?.biometricEnabled ? "Enabled" : "Disabled"}
-            onPress={() => {}}
+            onPress={() => navigation.navigate("BiometricSettings")}
           />
           <SettingsItem
             icon="credit-card"
@@ -160,7 +160,7 @@ export default function SettingsScreen() {
             icon="shield"
             title="Aadhaar Verification"
             subtitle={userData?.aadhaarLinked ? "Verified" : "Not linked"}
-            onPress={() => {}}
+            onPress={() => navigation.navigate("AadhaarVerification")}
           />
         </View>
       </View>
@@ -173,17 +173,17 @@ export default function SettingsScreen() {
           <SettingsItem
             icon="help-circle"
             title="Help & FAQ"
-            onPress={() => {}}
+            onPress={() => navigation.navigate("HelpFaq")}
           />
           <SettingsItem
             icon="message-circle"
             title="Contact Support"
-            onPress={() => {}}
+            onPress={() => navigation.navigate("ContactSupport")}
           />
           <SettingsItem
             icon="file-text"
             title="Terms & Privacy"
-            onPress={() => {}}
+            onPress={() => navigation.navigate("TermsPrivacy")}
           />
         </View>
       </View>

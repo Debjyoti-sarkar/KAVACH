@@ -1,312 +1,306 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Platform } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
+// screens/VoiceAssistantScreen.tsx
+import React, { useRef, useState, useCallback } from "react";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  SafeAreaView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform
+} from "react-native";
+import * as Speech from 'expo-speech';
+import { useNavigation } from '@react-navigation/native';
+import { VoiceRecorder, VoiceRecorderHandle } from "../components/VoiceRecorder";
+import { AssistantInput } from "../components/AssistantInput";
+import { TestConnection } from "../components/TestConnection";
+import { parseText, ParseResponse } from "../services/assistant";
+import { useTheme } from "../hooks/useTheme";
 
-import { ThemedText } from "@/components/ThemedText";
-import { useTheme } from "@/hooks/useTheme";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
-import { RootStackParamList } from "@/navigation/RootNavigator";
+// Helper to get colors with fallbacks
+const getColors = (theme: any) => ({
+  ...theme,
+  background: theme.backgroundRoot || theme.background || '#F5F1E8',
+  textSecondary: theme.textSecondary || '#888',
+});
 
-const SAMPLE_COMMANDS = [
-  "Send 500 to Rahul",
-  "Check my balance",
-  "Show recent transactions",
-  "Pay electricity bill",
-  "Send money to Priya",
-];
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+interface Message {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+  intent?: string;
+  action?: string;
+}
 
 export default function VoiceAssistantScreen() {
+  const navigation = useNavigation<any>();
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { t } = useLanguage();
-
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [status, setStatus] = useState<"idle" | "listening" | "processing">("idle");
-
-  const pulseScale = useSharedValue(1);
-  const waveScale1 = useSharedValue(1);
-  const waveScale2 = useSharedValue(1);
-  const waveScale3 = useSharedValue(1);
-
-  useEffect(() => {
-    if (isListening) {
-      pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1.2, { duration: 500 }),
-          withTiming(1, { duration: 500 })
-        ),
-        -1,
-        true
-      );
-
-      waveScale1.value = withRepeat(
-        withSequence(
-          withTiming(1.5, { duration: 600 }),
-          withTiming(1, { duration: 600 })
-        ),
-        -1,
-        true
-      );
-      waveScale2.value = withRepeat(
-        withSequence(
-          withTiming(1.8, { duration: 800 }),
-          withTiming(1, { duration: 800 })
-        ),
-        -1,
-        true
-      );
-      waveScale3.value = withRepeat(
-        withSequence(
-          withTiming(2.1, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
-        -1,
-        true
-      );
-    } else {
-      pulseScale.value = withSpring(1);
-      waveScale1.value = withSpring(1);
-      waveScale2.value = withSpring(1);
-      waveScale3.value = withSpring(1);
+  const colors = getColors(theme);
+  const recorderRef = useRef<VoiceRecorderHandle | null>(null);
+  
+  const [inputText, setInputText] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '0',
+      text: "Hello! I'm your payment assistant. How can I help you today?",
+      isUser: false,
+      timestamp: new Date(),
     }
-  }, [isListening]);
+  ]);
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
+  // Add a message to the chat
+  const addMessage = useCallback((text: string, isUser: boolean, intent?: string, action?: string) => {
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      text,
+      isUser,
+      timestamp: new Date(),
+      intent,
+      action,
+    }]);
+  }, []);
 
-  const wave1Style = useAnimatedStyle(() => ({
-    transform: [{ scale: waveScale1.value }],
-    opacity: isListening ? 0.3 : 0,
-  }));
-
-  const wave2Style = useAnimatedStyle(() => ({
-    transform: [{ scale: waveScale2.value }],
-    opacity: isListening ? 0.2 : 0,
-  }));
-
-  const wave3Style = useAnimatedStyle(() => ({
-    transform: [{ scale: waveScale3.value }],
-    opacity: isListening ? 0.1 : 0,
-  }));
-
-  const handleMicPress = () => {
-    if (status === "idle") {
-      setIsListening(true);
-      setStatus("listening");
-      setTranscript("");
-
-      setTimeout(() => {
-        setStatus("processing");
-        setIsListening(false);
-        setTranscript(SAMPLE_COMMANDS[Math.floor(Math.random() * SAMPLE_COMMANDS.length)]);
-
-        setTimeout(() => {
-          setStatus("idle");
-        }, 2000);
-      }, 3000);
-    }
-  };
-
-  const handleSuggestion = (command: string) => {
-    setTranscript(command);
-    setStatus("processing");
+  // Process text through backend NLU and handle response
+  const processText = useCallback(async (text: string) => {
+    if (!text.trim()) return;
     
-    setTimeout(() => {
-      if (command.toLowerCase().includes("send")) {
-        navigation.navigate("SendMoney");
-      } else if (command.toLowerCase().includes("balance")) {
-        navigation.navigate("Balance");
-      } else if (command.toLowerCase().includes("transaction")) {
-        navigation.navigate("TransactionHistory");
+    // Add user message
+    addMessage(text, true);
+    setIsProcessing(true);
+
+    try {
+      const response: ParseResponse = await parseText(text);
+      
+      // Add assistant response
+      addMessage(
+        response.replyText || "I understood your request.",
+        false,
+        response.intent,
+        response.actionSuggested
+      );
+
+      // Speak the reply
+      if (response.replyText) {
+        Speech.speak(response.replyText, {
+          language: 'en',
+          pitch: 1.0,
+          rate: 0.9,
+        });
       }
-    }, 1500);
+
+      // Handle navigation based on action
+      handleAction(response.actionSuggested, response.entities);
+
+    } catch (error) {
+      console.error("Error processing text:", error);
+      const errorMsg = "Sorry, I couldn't process your request. Please try again.";
+      addMessage(errorMsg, false);
+      Speech.speak(errorMsg);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [addMessage]);
+
+  // Handle actions based on intent
+  const handleAction = (action: string, entities?: Record<string, any>) => {
+    switch (action) {
+      case 'open_contact':
+        // Navigate to send money with contact pre-filled
+        Alert.alert(
+          'Open Contact',
+          'Would you like to send money to this contact?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Send Money', 
+              onPress: () => navigation.navigate('SendMoney', { contact: entities?.contact })
+            }
+          ]
+        );
+        break;
+
+      case 'prefill_and_navigate_upi':
+        // Navigate to UPI payment with amount pre-filled
+        const amount = entities?.amount;
+        const recipient = entities?.recipient;
+        navigation.navigate('SendMoney', { 
+          amount: amount,
+          recipient: recipient,
+          paymentMethod: 'UPI'
+        });
+        break;
+
+      case 'help_support_page':
+        // Navigate to help/settings
+        navigation.navigate('Settings');
+        break;
+
+      case 'ask_pin_for_balance':
+        // Navigate to balance screen
+        navigation.navigate('Balance');
+        break;
+
+      case 'show_history':
+        // Navigate to transaction history
+        navigation.navigate('TransactionHistory');
+        break;
+
+      case 'scan_qr':
+        // Navigate to QR scanner
+        navigation.navigate('QRScanner');
+        break;
+
+      case 'check_fraud':
+        // Navigate to fraud scanner
+        navigation.navigate('FraudScan');
+        break;
+
+      default:
+        // No specific action needed
+        console.log('No action to perform for:', action);
+        break;
+    }
   };
+
+  // Handle send button press
+  const handleSend = useCallback(() => {
+    if (inputText.trim()) {
+      processText(inputText.trim());
+      setInputText("");
+    }
+  }, [inputText, processText]);
+
+  // Handle transcribed text from voice recorder
+  const handleTranscribed = useCallback((text: string) => {
+    if (text.trim()) {
+      processText(text.trim());
+    } else {
+      Alert.alert("Couldn't hear you", "Please try speaking again.");
+    }
+    setIsProcessing(false);
+  }, [processText]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.backgroundRoot,
-          paddingTop: insets.top + Spacing.xl,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
-    >
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.closeButton}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundRoot || colors.background || '#F5F1E8' }]}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+        keyboardVerticalOffset={90}
+      >
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Voice Assistant</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary || '#888' }]}>
+            Speak or type your request
+          </Text>
+        </View>
+
+        {/* Connection Test */}
+        <TestConnection />
+
+        {/* Messages List */}
+        <ScrollView 
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
         >
-          <Feather name="x" size={24} color={theme.text} />
-        </Pressable>
-        <ThemedText type="h3">{t("voiceAssistant")}</ThemedText>
-        <View style={{ width: 44 }} />
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.micContainer}>
-          <Animated.View style={[styles.wave, wave3Style, { backgroundColor: NexaVaultColors.voiceAssistant }]} />
-          <Animated.View style={[styles.wave, wave2Style, { backgroundColor: NexaVaultColors.voiceAssistant }]} />
-          <Animated.View style={[styles.wave, wave1Style, { backgroundColor: NexaVaultColors.voiceAssistant }]} />
-          
-          <AnimatedPressable
-            onPress={handleMicPress}
-            disabled={status !== "idle"}
-            style={[
-              styles.micButton,
-              { backgroundColor: NexaVaultColors.voiceAssistant },
-              Shadows.lg,
-              pulseStyle,
-            ]}
-          >
-            <Feather
-              name={status === "processing" ? "loader" : "mic"}
-              size={48}
-              color="#FFFFFF"
-            />
-          </AnimatedPressable>
-        </View>
-
-        <ThemedText style={styles.statusText}>
-          {status === "idle" && t("tapToSpeak")}
-          {status === "listening" && t("listening")}
-          {status === "processing" && t("processing")}
-        </ThemedText>
-
-        {transcript ? (
-          <View style={[styles.transcriptCard, { backgroundColor: theme.card }, Shadows.md]}>
-            <Feather name="message-circle" size={20} color={NexaVaultColors.voiceAssistant} />
-            <ThemedText style={styles.transcriptText}>"{transcript}"</ThemedText>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={styles.suggestions}>
-        <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
-          Try saying:
-        </ThemedText>
-        <View style={styles.suggestionChips}>
-          {SAMPLE_COMMANDS.slice(0, 3).map((command, index) => (
-            <Pressable
-              key={index}
-              onPress={() => handleSuggestion(command)}
-              style={[styles.suggestionChip, { backgroundColor: theme.backgroundSecondary }]}
+          {messages.map((message) => (
+            <View
+              key={message.id}
+              style={[
+                styles.messageBubble,
+                message.isUser 
+                  ? [styles.userBubble, { backgroundColor: colors.primary }]
+                  : [styles.assistantBubble, { backgroundColor: colors.card, borderColor: colors.border }]
+              ]}
             >
-              <ThemedText type="small">"{command}"</ThemedText>
-            </Pressable>
+              <Text 
+                style={[
+                  styles.messageText,
+                  { color: message.isUser ? '#fff' : colors.text }
+                ]}
+              >
+                {message.text}
+              </Text>
+              {message.intent && (
+                <Text style={[styles.intentTag, { color: message.isUser ? '#ddd' : colors.textSecondary }]}>
+                  Intent: {message.intent}
+                </Text>
+              )}
+            </View>
           ))}
-        </View>
-      </View>
+        </ScrollView>
 
-      {Platform.OS === "web" ? (
-        <View style={[styles.webNotice, { backgroundColor: NexaVaultColors.info + "20" }]}>
-          <Feather name="info" size={16} color={NexaVaultColors.info} />
-          <ThemedText type="caption" style={{ color: NexaVaultColors.info, marginLeft: Spacing.sm, flex: 1 }}>
-            Voice recognition works best in Expo Go on your device.
-          </ThemedText>
-        </View>
-      ) : null}
-    </View>
+        {/* Voice Recorder */}
+        <VoiceRecorder
+          ref={recorderRef}
+          onTranscribed={handleTranscribed}
+          useAssistantEndpoint={true}
+          primaryColor={colors.primary}
+        />
+
+        {/* Text Input */}
+        <AssistantInput
+          text={inputText}
+          setText={setInputText}
+          onSend={handleSend}
+          placeholder="Type a message..."
+          disabled={isProcessing}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: Spacing["3xl"],
+    padding: 16,
+    borderBottomWidth: 1,
   },
-  closeButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
-  content: {
+  subtitle: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  messagesContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  micContainer: {
-    width: 200,
-    height: 200,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.xl,
+  messagesContent: {
+    padding: 16,
   },
-  wave: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 8,
   },
-  micButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
+  userBubble: {
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
   },
-  statusText: {
-    fontSize: 18,
-    marginBottom: Spacing.xl,
+  assistantBubble: {
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
   },
-  transcriptCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.md,
-    maxWidth: "90%",
-  },
-  transcriptText: {
-    flex: 1,
+  messageText: {
     fontSize: 16,
-    fontStyle: "italic",
+    lineHeight: 22,
   },
-  suggestions: {
-    paddingVertical: Spacing.xl,
-  },
-  suggestionChips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  suggestionChip: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
-  },
-  webNotice: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.lg,
+  intentTag: {
+    fontSize: 11,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
 });

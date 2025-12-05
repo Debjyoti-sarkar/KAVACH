@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type AuthStep = 
+export type AuthStep =
   | "language_selection"
-  | "phone_verification" 
+  | "phone_verification"
   | "bank_linking"
   | "security_setup"
   | "authenticated";
@@ -22,19 +22,25 @@ interface AuthContextType {
   userData: UserData | null;
   isLoading: boolean;
   hasCompletedOnboarding: boolean;
-  voiceGuideEnabled: boolean;
-  isOnline: boolean;
+
   setAuthStep: (step: AuthStep) => void;
   setPhoneNumber: (phone: string) => Promise<void>;
   linkBank: (bankName: string, accountNumber: string) => Promise<void>;
   setupPin: (pin: string) => Promise<void>;
-  enableBiometric: (enabled: boolean) => Promise<void>;
-  linkAadhaar: () => Promise<void>;
   login: () => Promise<void>;
   logout: () => Promise<void>;
-  toggleVoiceGuide: () => void;
-  setOnlineStatus: (status: boolean) => void;
   completeOnboarding: () => Promise<void>;
+
+  // NEW security model
+  needsReauth: boolean;
+  requireReauth: () => void;
+  completeReauth: () => void;
+
+  // OLD dashboard features (kept for compatibility)
+  voiceGuideEnabled: boolean;
+  toggleVoiceGuide: () => void;
+  isOnline: boolean;
+  setOnlineStatus: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,43 +54,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+
+  // security
+  const [needsReauth, setNeedsReauth] = useState(false);
+
+  // dashboard old features
   const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(true);
-  const [isOnline, setIsOnlineState] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    loadAuthState();
+    loadState();
   }, []);
 
-  const loadAuthState = async () => {
+  const loadState = async () => {
     try {
-      const [savedAuth, savedUser, savedOnboarding] = await Promise.all([
-        AsyncStorage.getItem(AUTH_KEY),
-        AsyncStorage.getItem(USER_KEY),
-        AsyncStorage.getItem(ONBOARDING_KEY),
-      ]);
+      const savedAuth = await AsyncStorage.getItem(AUTH_KEY);
+      const savedUser = await AsyncStorage.getItem(USER_KEY);
+      const savedOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
 
       if (savedOnboarding === "true") {
         setHasCompletedOnboarding(true);
-        if (savedAuth === "authenticated" && savedUser) {
-          setUserData(JSON.parse(savedUser));
+
+        if (savedUser) setUserData(JSON.parse(savedUser));
+
+        if (savedAuth === "authenticated") {
           setAuthStepState("authenticated");
-        } else {
-          setAuthStepState("language_selection");
+          setNeedsReauth(true); // ask PIN because user already registered
         }
       }
-    } catch (error) {
-      console.error("Failed to load auth state:", error);
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      console.log("AUTH LOAD ERROR:", e);
     }
+
+    setIsLoading(false);
   };
 
-  const setAuthStep = useCallback((step: AuthStep) => {
+  const setAuthStep = (step: AuthStep) => {
     setAuthStepState(step);
-  }, []);
+  };
 
-  const setPhoneNumber = useCallback(async (phone: string) => {
-    const newUserData: UserData = {
+  const setPhoneNumber = async (phone: string) => {
+    const user: UserData = {
       phoneNumber: phone,
       bankName: "",
       bankAccountMasked: "",
@@ -92,93 +102,96 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       biometricEnabled: false,
       aadhaarLinked: false,
     };
-    setUserData(newUserData);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUserData));
-  }, []);
+    setUserData(user);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+  };
 
-  const linkBank = useCallback(async (bankName: string, accountNumber: string) => {
+  const linkBank = async (bankName: string, accountNumber: string) => {
     if (!userData) return;
     const masked = "XXXX XXXX XXXX " + accountNumber.slice(-4);
-    const newUserData = { ...userData, bankName, bankAccountMasked: masked };
-    setUserData(newUserData);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUserData));
-  }, [userData]);
 
-  const setupPin = useCallback(async (pin: string) => {
+    const newUser = { ...userData, bankName, bankAccountMasked: masked };
+    setUserData(newUser);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+  };
+
+  const setupPin = async (pin: string) => {
     if (!userData) return;
-    const newUserData = { ...userData, pin };
-    setUserData(newUserData);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUserData));
-  }, [userData]);
+    const newUser = { ...userData, pin };
+    setUserData(newUser);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+  };
 
-  const enableBiometric = useCallback(async (enabled: boolean) => {
-    if (!userData) return;
-    const newUserData = { ...userData, biometricEnabled: enabled };
-    setUserData(newUserData);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUserData));
-  }, [userData]);
-
-  const linkAadhaar = useCallback(async () => {
-    if (!userData) return;
-    const newUserData = { ...userData, aadhaarLinked: true };
-    setUserData(newUserData);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUserData));
-  }, [userData]);
-
-  const login = useCallback(async () => {
-    setAuthStepState("authenticated");
+  const login = async () => {
     await AsyncStorage.setItem(AUTH_KEY, "authenticated");
-  }, []);
+    setAuthStepState("authenticated");
+    setNeedsReauth(false);
+  };
 
-  const logout = useCallback(async () => {
-    setAuthStepState("language_selection");
+  const logout = async () => {
     await AsyncStorage.removeItem(AUTH_KEY);
-  }, []);
+    setNeedsReauth(true);
+    setAuthStepState("language_selection");
+  };
 
-  const toggleVoiceGuide = useCallback(() => {
-    setVoiceGuideEnabled(prev => !prev);
-  }, []);
-
-  const setOnlineStatus = useCallback((status: boolean) => {
-    setIsOnlineState(status);
-  }, []);
-
-  const completeOnboarding = useCallback(async () => {
-    setHasCompletedOnboarding(true);
+  const completeOnboarding = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+    setHasCompletedOnboarding(true);
+
     await AsyncStorage.setItem(AUTH_KEY, "authenticated");
     setAuthStepState("authenticated");
-  }, []);
+  };
+
+  const requireReauth = () => {
+    if (hasCompletedOnboarding) {
+      console.log("🔐 requireReauth called - setting needsReauth to true");
+      setNeedsReauth(true);
+    }
+  };
+
+  const completeReauth = () => {
+    setNeedsReauth(false);
+  };
+
+  // dashboard toggles
+  const toggleVoiceGuide = () =>
+    setVoiceGuideEnabled((prev) => !prev);
+
+  const setOnlineStatus = (v: boolean) => setIsOnline(v);
 
   return (
-    <AuthContext.Provider value={{
-      authStep,
-      userData,
-      isLoading,
-      hasCompletedOnboarding,
-      voiceGuideEnabled,
-      isOnline,
-      setAuthStep,
-      setPhoneNumber,
-      linkBank,
-      setupPin,
-      enableBiometric,
-      linkAadhaar,
-      login,
-      logout,
-      toggleVoiceGuide,
-      setOnlineStatus,
-      completeOnboarding,
-    }}>
+    <AuthContext.Provider
+      value={{
+        authStep,
+        userData,
+        isLoading,
+        hasCompletedOnboarding,
+
+        setAuthStep,
+        setPhoneNumber,
+        linkBank,
+        setupPin,
+        login,
+        logout,
+        completeOnboarding,
+
+        needsReauth,
+        requireReauth,
+        completeReauth,
+
+        voiceGuideEnabled,
+        toggleVoiceGuide,
+        isOnline,
+        setOnlineStatus,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
 }

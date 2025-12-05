@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, Image, Platform, Linking } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Image,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -16,6 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { verifySecurePin } from "@/utils/secureManager";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -25,7 +32,9 @@ export default function LoginScreen() {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t, setLanguage, language, languages } = useLanguage();
-  const { userData, login } = useAuth();
+
+  //  🔥 NEW
+  const { userData, login, completeReauth } = useAuth();
 
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -64,9 +73,7 @@ export default function LoginScreen() {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
-      if (!hasHardware || !isEnrolled) {
-        return;
-      }
+      if (!hasHardware || !isEnrolled) return;
 
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: "Login to NEXAVAULT",
@@ -74,6 +81,10 @@ export default function LoginScreen() {
       });
 
       if (result.success) {
+
+        // 🔥 NEW — unlock app
+        completeReauth();
+
         await login();
         navigation.reset({
           index: 0,
@@ -96,22 +107,44 @@ export default function LoginScreen() {
   };
 
   const verifyPin = async (enteredPin: string) => {
-    if (enteredPin === userData?.pin) {
+    // Try secure PIN first
+    const ok = await verifySecurePin(enteredPin);
+    if (ok) {
+
+      // 🔥 NEW
+      completeReauth();
+
       await login();
       navigation.reset({
         index: 0,
         routes: [{ name: "Dashboard" }],
       });
-    } else {
-      setPinError(true);
-      shakeAnimation.value = withSequence(
-        withSpring(-10, { damping: 3, stiffness: 400 }),
-        withSpring(10, { damping: 3, stiffness: 400 }),
-        withSpring(-10, { damping: 3, stiffness: 400 }),
-        withSpring(0, { damping: 3, stiffness: 400 })
-      );
-      setPin("");
+      return;
     }
+
+    // Legacy fallback
+    if (enteredPin === userData?.pin) {
+
+      // 🔥 NEW
+      completeReauth();
+
+      await login();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Dashboard" }],
+      });
+      return;
+    }
+
+    // Incorrect PIN
+    setPinError(true);
+    shakeAnimation.value = withSequence(
+      withSpring(-10, { damping: 3, stiffness: 400 }),
+      withSpring(10, { damping: 3, stiffness: 400 }),
+      withSpring(-10, { damping: 3, stiffness: 400 }),
+      withSpring(0, { damping: 3, stiffness: 400 })
+    );
+    setPin("");
   };
 
   const handleLanguageSelect = async (langCode: string) => {
@@ -239,9 +272,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-  },
+  scrollContent: { flexGrow: 1 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -267,62 +298,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
   },
-  languageMenuText: {
-    fontSize: 16,
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: Spacing.lg,
-    borderRadius: BorderRadius.md,
-  },
-  appName: {
-    fontSize: 28,
-    fontWeight: "800",
-    letterSpacing: 2,
-    marginBottom: Spacing.xs,
-  },
-  welcome: {
-    fontSize: 16,
-    marginBottom: Spacing["4xl"],
-  },
-  pinSection: {
-    alignItems: "center",
-    width: "100%",
-  },
-  pinLabel: {
-    marginBottom: Spacing.xl,
-  },
-  pinContainer: {
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  pinDots: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  hiddenInput: {
-    position: "absolute",
-    opacity: 0,
-    width: "100%",
-    height: 60,
-  },
-  errorText: {
-    marginBottom: Spacing.md,
-  },
-  forgotButton: {
-    padding: Spacing.md,
-  },
+  languageMenuText: { fontSize: 16 },
+  content: { flex: 1, alignItems: "center", justifyContent: "center" },
+  logo: { width: 80, height: 80, marginBottom: Spacing.lg, borderRadius: BorderRadius.md },
+  appName: { fontSize: 28, fontWeight: "800", letterSpacing: 2, marginBottom: Spacing.xs },
+  welcome: { fontSize: 16, marginBottom: Spacing["4xl"] },
+  pinSection: { alignItems: "center", width: "100%" },
+  pinLabel: { marginBottom: Spacing.xl },
+  pinContainer: { alignItems: "center", marginBottom: Spacing.lg },
+  pinDots: { flexDirection: "row", gap: Spacing.md },
+  pinDot: { width: 16, height: 16, borderRadius: 8 },
+  hiddenInput: { position: "absolute", opacity: 0, width: "100%", height: 60 },
+  errorText: { marginBottom: Spacing.md },
+  forgotButton: { padding: Spacing.md },
   biometricButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -332,8 +320,5 @@ const styles = StyleSheet.create({
     marginTop: Spacing["3xl"],
     gap: Spacing.sm,
   },
-  biometricText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
+  biometricText: { fontSize: 16, fontWeight: "500" },
 });

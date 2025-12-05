@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Platform, Linking } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, Platform, Linking, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions, BarcodeScanningResult } from "expo-camera";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -42,17 +42,32 @@ export default function QRScannerScreen() {
     transform: [{ translateY: scanLinePosition.value * 200 }],
   }));
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  const handleBarCodeScanned = (result: BarcodeScanningResult) => {
     if (scanned) return;
+    
+    const { data, type } = result;
+    console.log("📷 QR Scanned - Type:", type, "Data:", data);
+    
     setScanned(true);
 
+    // Parse UPI QR code
+    // Format: upi://pay?pa=upiid@bank&pn=Name&am=100&cu=INR
     const upiMatch = data.match(/pa=([^&]+)/);
     const amountMatch = data.match(/am=([^&]+)/);
+    const nameMatch = data.match(/pn=([^&]+)/);
 
-    navigation.navigate("SendMoney", {
-      recipient: upiMatch ? upiMatch[1] : data,
-      amount: amountMatch ? amountMatch[1] : undefined,
-    });
+    const recipient = upiMatch ? decodeURIComponent(upiMatch[1]) : data;
+    const amount = amountMatch ? decodeURIComponent(amountMatch[1]) : undefined;
+
+    console.log("📤 Navigating to SendMoney with:", { recipient, amount });
+
+    // Small delay to show the scanned feedback
+    setTimeout(() => {
+      navigation.navigate("SendMoney", {
+        recipient: recipient,
+        amount: amount,
+      });
+    }, 300);
   };
 
   if (!permission) {
@@ -211,10 +226,24 @@ export default function QRScannerScreen() {
         </View>
 
         <View style={styles.overlayBottom}>
-          <ThemedText style={styles.scanText}>{t("scanQrCode")}</ThemedText>
-          <ThemedText style={styles.scanSubtext}>
-            Point your camera at a UPI QR code
+          <ThemedText style={styles.scanText}>
+            {scanned ? "✅ QR Code Scanned!" : t("scanQrCode")}
           </ThemedText>
+          <ThemedText style={styles.scanSubtext}>
+            {scanned ? "Redirecting to payment..." : "Point your camera at a UPI QR code"}
+          </ThemedText>
+
+          {scanned ? (
+            <Pressable
+              onPress={() => setScanned(false)}
+              style={[styles.manualButton, { borderColor: "#FFFFFF", marginBottom: Spacing.md }]}
+            >
+              <Feather name="refresh-cw" size={20} color="#FFFFFF" />
+              <ThemedText style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}>
+                Scan Again
+              </ThemedText>
+            </Pressable>
+          ) : null}
 
           <Pressable
             onPress={() => navigation.navigate("SendMoney")}

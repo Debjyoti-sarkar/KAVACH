@@ -16,6 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
+import { createPaymentOrder } from "@/services/paymentGateway";
 
 const RECENT_CONTACTS = [
   { id: "1", name: "Rahul Sharma", upiId: "rahul@upi", avatar: "R" },
@@ -89,6 +90,7 @@ export default function SendMoneyScreen() {
   const [note, setNote] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleContactSelect = (contact: typeof RECENT_CONTACTS[0]) => {
     setSelectedContact(contact.id);
@@ -103,17 +105,28 @@ export default function SendMoneyScreen() {
     setShowConfirmation(true);
   };
 
-  const handleConfirmPayment = () => {
-    Alert.alert(
-      "Payment Initiated",
-      `Sending ₹${amount} to ${recipient}`,
-      [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+  const handleConfirmPayment = async () => {
+    try {
+      setIsProcessing(true);
+
+      // Create payment order
+      const paymentOrder = await createPaymentOrder(
+        parseFloat(amount),
+        recipient,
+        note || undefined
+      );
+
+      // Navigate to payment processing screen
+      navigation.navigate("PaymentProcessing", { paymentOrder });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Failed to initiate payment. Please try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (showConfirmation) {
@@ -160,12 +173,14 @@ export default function SendMoneyScreen() {
           <View style={styles.confirmButtons}>
             <Button
               onPress={handleConfirmPayment}
+              disabled={isProcessing}
               style={{ backgroundColor: NexaVaultColors.primary, flex: 1 }}
             >
-              {t("confirm")}
+              {isProcessing ? "Processing..." : t("confirm")}
             </Button>
             <Pressable
               onPress={() => setShowConfirmation(false)}
+              disabled={isProcessing}
               style={[styles.cancelButton, { borderColor: theme.border }]}
             >
               <ThemedText>{t("cancel")}</ThemedText>

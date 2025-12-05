@@ -38,35 +38,45 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#F5F1E8",
-          "dark": {
-            "backgroundColor": "#1A1A1A"
-          }
-        }
-      ],
-      "expo-web-browser",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow NEXAVAULT to access your camera for QR code scanning"
-        }
-      ],
-      [
-        "expo-local-authentication",
-        {
-          "faceIDPermission": "Allow NEXAVAULT to use Face ID for secure authentication"
-        }
-      ]
-    ],
+"plugins": [
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/images/splash-icon.png",
+      "imageWidth": 200,
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F1E8",
+      "dark": {
+        "backgroundColor": "#1A1A1A"
+      }
+    }
+  ],
+  "expo-web-browser",
+  [
+    "expo-camera",
+    {
+      "cameraPermission": "Allow NEXAVAULT to access your camera for QR code scanning"
+    }
+  ],
+  [
+    "expo-local-authentication",
+    {
+      "faceIDPermission": "Allow NEXAVAULT to use Face ID for secure authentication"
+    }
+  ],
+
+  "expo-secure-store"
+
+  
+]
+,
     "experiments": {
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "66c7b9a6-1702-4619-b50b-4b5474dcde3a"
+      }
     }
   }
 }
