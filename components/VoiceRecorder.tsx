@@ -1,16 +1,25 @@
 // components/VoiceRecorder.tsx
-import React, { useState, useImperativeHandle, forwardRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from "react-native";
-import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system/legacy";
-import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from "../services/api";
-import { TRANSCRIBE_URL } from "../services/assistant";
+import React, {
+  useState,
+  useImperativeHandle,
+  forwardRef,
+  useEffect,
+} from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+} from "react-native";
+import { Audio } from "expo-av"; // ✔ correct import
+import * as FileSystem from "expo-file-system";
+import { Ionicons } from "@expo/vector-icons";
+import { TRANSCRIBE_URL, PARSE_URL } from "../services/assistant";
+import * as Speech from "expo-speech";
+import { useNavigation } from "@react-navigation/native";
 
-/**
- * Exposed imperative methods: start(), stop()
- * Use: const ref = useRef<VoiceRecorderHandle>(null); ref.current?.start();
- */
 export type VoiceRecorderHandle = {
   start: () => Promise<void>;
   stop: () => Promise<void>;
@@ -19,168 +28,156 @@ export type VoiceRecorderHandle = {
 
 export interface VoiceRecorderProps {
   onTranscribed: (text: string) => void;
-  useAssistantEndpoint?: boolean; // If true, use /assistant/transcribe, else use /stt
-  showUI?: boolean; // Whether to show the built-in UI
+  useAssistantEndpoint?: boolean;
+  enableAssistantFlow?: boolean;
+  showUI?: boolean;
   primaryColor?: string;
 }
 
-export const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
-  ({ onTranscribed, useAssistantEndpoint = false, showUI = true, primaryColor = '#007AFF' }, ref) => {
-    const [recording, setRecording] = useState<Audio.Recording | null>(null);
-    const [status, setStatus] = useState<"idle" | "recording" | "sending">("idle");
-    const [isStarting, setIsStarting] = useState(false);
+const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
+  (
+    {
+      onTranscribed,
+      useAssistantEndpoint = true,
+      enableAssistantFlow = false,
+      showUI = true,
+      primaryColor = "#007AFF",
+    },
+    ref
+  ) => {
+    const navigation = useNavigation<any>();
 
-    // Use an options object but cast to any to avoid SDK/type mismatch
-    const recordingOptions: any = {
-      ios: {
-        extension: ".caf",
-        bitRate: 128000,
-        sampleRate: 44100,
-        numberOfChannels: 1,
-        linearPCMBitDepth: 16,
-      },
-      android: {
-        extension: ".m4a",
-        sampleRate: 44100,
-        numberOfChannels: 1,
-        bitRate: 128000,
-      },
-    };
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    const [status, setStatus] = useState<"idle" | "recording" | "sending">(
+      "idle"
+    );
 
     // Cleanup on unmount
     useEffect(() => {
       return () => {
-        recording?.stopAndUnloadAsync().catch(() => {});
+        if (recording) {
+          recording.stopAndUnloadAsync().catch(() => {});
+        }
       };
-    }, []);
+    }, [recording]);
 
+    // -----------------------------
+    // 🟢 START RECORDING
+    // -----------------------------
     async function startRecording() {
       try {
-        // Guard: prevent concurrent start attempts
-        if (recording || status !== "idle" || isStarting) {
-          console.log("Already recording or starting, ignoring...");
+        console.log("🎤 Requesting mic permissions…");
+
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Microphone Permission Required",
+            "Enable microphone permission in settings."
+          );
           return;
         }
 
-        setIsStarting(true);
-
-        const perm = await Audio.requestPermissionsAsync();
-        if (!perm.granted) {
-          Alert.alert("Permission required", "Microphone permission is needed to record audio.");
-          setIsStarting(false);
-          return;
-        }
+        console.log("🎤 Permissions granted");
 
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
         });
 
+        console.log("🎤 Audio mode set.");
+
         const rec = new Audio.Recording();
-        await rec.prepareToRecordAsync(recordingOptions as any);
+
+        await rec.prepareToRecordAsync(
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
+        );
+
         await rec.startAsync();
+        console.log("🎤 Recording started!");
+
         setRecording(rec);
         setStatus("recording");
-        setIsStarting(false);
       } catch (err) {
-        console.log("Recording start error:", err);
-        setIsStarting(false);
-        Alert.alert("Error", "Failed to start recording. Please try again.");
+        console.log("🚨 Recording start error:", err);
+        Alert.alert(
+          "Error",
+          "Could not start recording. Please check microphone permission and try again."
+        );
       }
     }
 
+    // -----------------------------
+    // 🛑 STOP RECORDING
+    // -----------------------------
     async function stopRecording() {
       try {
         if (!recording) return;
+
         setStatus("sending");
         await recording.stopAndUnloadAsync();
+
         const uri = recording.getURI();
+        console.log("🎤 File URI:", uri);
+
         setRecording(null);
 
-        if (!uri) {
-          throw new Error("No recording URI");
-        }
+        if (!uri) throw new Error("No audio file URI");
 
-        let text = "";
+        // Convert audio → FormData
+        const formData = new FormData();
+        formData.append("audio", {
+          uri,
+          name: "recording.m4a",
+          type: "audio/m4a",
+        } as any);
 
-        if (useAssistantEndpoint) {
-          // Use multipart form data for /assistant/transcribe
-          const formData = new FormData();
-          const filename = uri.split('/').pop() || 'audio.m4a';
-          
-          formData.append('audio', {
-            uri: uri,
-            name: filename,
-            type: 'audio/m4a',
-          } as any);
+        // ------------------------------------------------------
+        // 🔥 IMPORTANT FIX: prevent Expo from corrupting uploads
+        // ------------------------------------------------------
+        const res = await fetch(TRANSCRIBE_URL, {
+          method: "POST",
+          headers: undefined, // << 🔥 FIX HERE
+          body: formData,
+        });
 
-          const res = await fetch(TRANSCRIBE_URL, {
-            method: "POST",
-            body: formData,
-          });
+        const json = await res.json();
+        const text = json?.text || "";
 
-          if (!res.ok) {
-            throw new Error(`Transcription failed: ${res.status}`);
-          }
-
-          const json = await res.json();
-          text = typeof json?.text === "string" ? json.text : "";
-        } else {
-          // Use base64 for /stt endpoint (legacy)
-          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
-
-          const res = await fetch(`${BASE_URL}/stt`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ audio: base64, fileName: "recording.m4a" }),
-          });
-
-          const json = await res.json();
-          text = typeof json?.text === "string" ? json.text : "";
-        }
-
+        console.log("📝 Transcribed text:", text);
         onTranscribed(text);
-      } catch (e) {
-        console.log("Stop recording error:", e);
-        Alert.alert("Error", "Failed to process recording. Please try again.");
+      } catch (err) {
+        console.log("🚨 Stop recording error:", err);
+        Alert.alert("Error", "Failed to process audio.");
       } finally {
         setStatus("idle");
       }
     }
 
-    // Expose start/stop to parent via ref
+    // Expose methods to parent
     useImperativeHandle(ref, () => ({
       start: startRecording,
       stop: stopRecording,
       isRecording: () => status === "recording",
     }));
 
-    // Optionally render UI controls
-    if (!showUI) {
-      return null;
-    }
-
-    const handlePress = () => {
-      if (status === "recording") {
-        stopRecording();
-      } else if (status === "idle") {
-        startRecording();
-      }
-    };
+    // UI
+    if (!showUI) return null;
 
     return (
       <View style={styles.container}>
         <TouchableOpacity
           style={[
             styles.micButton,
-            { backgroundColor: status === "recording" ? '#FF3B30' : primaryColor },
-            status === "sending" && styles.micButtonDisabled,
+            { backgroundColor: status === "recording" ? "#FF3B30" : primaryColor },
           ]}
-          onPress={handlePress}
           disabled={status === "sending"}
+          onPress={() => {
+            if (status === "recording") stopRecording();
+            else startRecording();
+          }}
         >
           {status === "sending" ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Ionicons
               name={status === "recording" ? "stop" : "mic"}
@@ -189,10 +186,11 @@ export const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>
             />
           )}
         </TouchableOpacity>
+
         <Text style={styles.statusText}>
-          {status === "idle" && "Tap to speak"}
-          {status === "recording" && "Recording... Tap to stop"}
-          {status === "sending" && "Processing..."}
+          {status === "idle" && "Tap to record"}
+          {status === "recording" && "Recording… Tap to stop"}
+          {status === "sending" && "Processing audio…"}
         </Text>
       </View>
     );
@@ -200,33 +198,16 @@ export const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>
 );
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    padding: 12,
-  },
+  container: { alignItems: "center", padding: 12 },
   micButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  micButtonDisabled: {
-    opacity: 0.6,
-  },
-  statusText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#666',
-  },
+  statusText: { marginTop: 8, fontSize: 14, color: "#666" },
 });
 
 VoiceRecorder.displayName = "VoiceRecorder";
-
-// Provide a default export as well for compatibility with default-import usage
 export default VoiceRecorder;

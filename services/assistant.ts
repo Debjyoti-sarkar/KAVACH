@@ -59,23 +59,19 @@ export async function parseText(text: string): Promise<ParseResponse> {
 export async function transcribeAudio(audioUri: string): Promise<TranscribeResponse> {
   try {
     const formData = new FormData();
-    
-    // Get the filename from the URI
-    const filename = audioUri.split('/').pop() || 'audio.wav';
-    
-    // Append the audio file to form data
+
+    const filename = audioUri.split('/').pop() || 'recording.m4a';
+
+    // Correct Expo upload behavior → DO NOT SET Content-Type manually
     formData.append('audio', {
       uri: audioUri,
       name: filename,
-      type: 'audio/wav',
+      type: 'audio/m4a',
     } as any);
 
     const response = await fetch(TRANSCRIBE_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      body: formData,
+      body: formData,    // No headers → let RN set boundary correctly
     });
 
     if (!response.ok) {
