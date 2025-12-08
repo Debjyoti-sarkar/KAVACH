@@ -31,6 +31,7 @@ import AadhaarVerificationScreen from "@/screens/AadhaarVerificationScreen";
 import HelpFaqScreen from "@/screens/HelpFaqScreen";
 import ContactSupportScreen from "@/screens/ContactSupportScreen";
 import TermsPrivacyScreen from "@/screens/TermsPrivacyScreen";
+import ContactPickerScreen from "@/screens/ContactPickerScreen";
 import { PaymentOrder } from "@/services/paymentGateway";
 
 export type RootStackParamList = {
@@ -40,7 +41,8 @@ export type RootStackParamList = {
   SecuritySetup: undefined;
   Login: undefined;
   Dashboard: undefined;
-  SendMoney: { recipient?: string; amount?: string } | undefined;
+  SendMoney: { recipient?: string; amount?: string; contactName?: string } | undefined;
+  ContactPicker: undefined;
   PaymentProcessing: { paymentOrder: PaymentOrder };
   QRScanner: undefined;
   FraudScan: undefined;
@@ -250,6 +252,12 @@ export default function RootNavigator() {
         name="TermsPrivacy"
         component={TermsPrivacyScreen}
         options={{ headerTitle: "Terms & Privacy" }}
+      />
+
+      <Stack.Screen
+        name="ContactPicker"
+        component={ContactPickerScreen}
+        options={{ headerTitle: "Select Contact" }}
       />
 
       <Stack.Screen
