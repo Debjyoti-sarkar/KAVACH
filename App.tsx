@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { StyleSheet, View, ActivityIndicator, AppState } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, NavigationState } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -12,17 +12,52 @@ import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NexaSafeProvider, useNexaSafe } from "@/contexts/NexaSafeContext";
 import { useTheme } from "@/hooks/useTheme";
 import { NexaVaultColors } from "@/constants/theme";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Helper to get current route name from navigation state
+function getActiveRouteName(state: NavigationState | undefined): string | undefined {
+  if (!state) return undefined;
+  const route = state.routes[state.index];
+  if (route.state) {
+    return getActiveRouteName(route.state as NavigationState);
+  }
+  return route.name;
+}
+
 // ----------------------------------------------------
 // Internal Component – Your main app content
 // ----------------------------------------------------
 function AppContent() {
-  const { isLoading, requireReauth } = useAuth();
+  const { isLoading, requireReauth, logout, hasCompletedOnboarding } = useAuth();
   const { theme, isDark } = useTheme();
+  const {
+    startSession,
+    endSession,
+    setScreenRecordingDetected,
+    setLogoutCallback,
+    isSessionActive,
+    trackScreenVisit,
+  } = useNexaSafe();
+
+  // Track previous route for NexaSafe screen tracking
+  const routeNameRef = useRef<string | undefined>(undefined);
+
+  // Handle navigation state changes for NexaSafe tracking
+  const handleNavigationStateChange = useCallback((state: NavigationState | undefined) => {
+    const currentRouteName = getActiveRouteName(state);
+    const previousRouteName = routeNameRef.current;
+
+    if (currentRouteName && currentRouteName !== previousRouteName && isSessionActive) {
+      trackScreenVisit(currentRouteName);
+      console.log(`📱 NexaSafe tracking screen: ${currentRouteName}`);
+    }
+
+    routeNameRef.current = currentRouteName;
+  }, [isSessionActive, trackScreenVisit]);
 
   // 🔒 SECURITY: Block screen recording and screenshots globally
   useEffect(() => {
@@ -32,6 +67,8 @@ function AppContent() {
         console.log("🔒 Screen capture prevention enabled globally");
       } catch (error) {
         console.warn("Failed to enable screen capture prevention:", error);
+        // If prevention fails, mark as potential screen recording
+        setScreenRecordingDetected(true);
       }
     };
 
@@ -41,7 +78,23 @@ function AppContent() {
     return () => {
       // Don't disable on unmount - keep protection active
     };
-  }, []);
+  }, [setScreenRecordingDetected]);
+
+  // 🛡️ NexaSafe: Set logout callback
+  useEffect(() => {
+    setLogoutCallback(() => {
+      console.log("🚪 NexaSafe triggered logout due to suspicious activity");
+      logout();
+    });
+  }, [setLogoutCallback, logout]);
+
+  // 🛡️ NexaSafe: Start session when user is authenticated
+  useEffect(() => {
+    if (hasCompletedOnboarding && !isLoading && !isSessionActive) {
+      startSession();
+      console.log("🛡️ NexaSafe session started for authenticated user");
+    }
+  }, [hasCompletedOnboarding, isLoading, isSessionActive, startSession]);
 
   // 🔥 CRUCIAL: Ask for PIN every time the app comes to foreground
   useEffect(() => {
@@ -73,7 +126,7 @@ function AppContent() {
 
   return (
     <>
-      <NavigationContainer>
+      <NavigationContainer onStateChange={handleNavigationStateChange}>
         <RootNavigator />
       </NavigationContainer>
       <StatusBar style={isDark ? "light" : "dark"} />
@@ -93,7 +146,9 @@ export default function App() {
           <KeyboardProvider>
             <LanguageProvider>
               <AuthProvider>
-                <AppContent />
+                <NexaSafeProvider>
+                  <AppContent />
+                </NexaSafeProvider>
               </AuthProvider>
             </LanguageProvider>
           </KeyboardProvider>

@@ -1,0 +1,18 @@
+{
+  "name": "nexasafe-analytics-server",
+  "version": "1.0.0",
+  "description": "NexaSafe Behavioral Analytics Dashboard Server",
+  "main": "nexasafe-server.js",
+  "scripts": {
+    "start": "node nexasafe-server.js",
+    "dev": "nodemon nexasafe-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

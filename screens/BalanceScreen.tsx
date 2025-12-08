@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, RefreshControl } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, RefreshControl, GestureResponderEvent } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -12,6 +12,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { useScreenSecurity } from "@/hooks/useScreenSecurity";
 
@@ -97,6 +98,31 @@ export default function BalanceScreen() {
   const { userData } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+
+  // NexaSafe tracking
+  const { trackScreenVisit, trackTap, trackTapDuration, isSessionActive } = useNexaSafe();
+  const tapStartTime = useRef<number>(0);
+
+  // Track screen visit on mount
+  useEffect(() => {
+    if (isSessionActive) {
+      trackScreenVisit('Balance');
+    }
+  }, [isSessionActive]);
+
+  // Handle tap tracking
+  const handleTapStart = () => {
+    tapStartTime.current = Date.now();
+  };
+
+  const handleTapEnd = (e: GestureResponderEvent, zone: string = 'active') => {
+    if (isSessionActive) {
+      const { locationX, locationY } = e.nativeEvent;
+      const duration = Date.now() - tapStartTime.current;
+      trackTap('Balance', locationX, locationY, zone);
+      trackTapDuration('Balance', duration);
+    }
+  };
 
   // Enable screen security for balance screen (sensitive financial info)
   useScreenSecurity(true);

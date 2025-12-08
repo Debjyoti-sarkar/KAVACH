@@ -3,8 +3,17 @@
  * Connects to backend server which communicates with Cashfree
  */
 
+import { Platform } from 'react-native';
+
 // Backend server URL - using local IP for development
-const API_BASE_URL = 'http://172.16.10.100:3000/api/payment';
+// For testing without payment backend, use mock mode
+const USE_MOCK_PAYMENTS = true; // Set to false when payment backend is running
+
+const API_BASE_URL = Platform.select({
+  android: 'http://192.168.0.174:3000/api/payment',
+  ios: 'http://192.168.0.174:3000/api/payment',
+  default: 'http://localhost:3000/api/payment'
+});
 
 export interface PaymentOrder {
   orderId: string;
@@ -30,6 +39,30 @@ export interface PaymentResult {
 }
 
 /**
+ * Create a mock payment order for testing without backend
+ */
+function createMockPaymentOrder(
+  amount: number,
+  recipient: string,
+  note?: string
+): PaymentOrder {
+  const orderId = `MOCK_${Date.now()}_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  console.log('🎭 Creating MOCK payment order:', { orderId, amount, recipient });
+
+  return {
+    orderId,
+    amount,
+    recipient,
+    note,
+    merchantId: 'MOCK_MERCHANT',
+    timestamp: new Date().toISOString(),
+    paymentSessionId: `session_${orderId}`,
+    orderToken: `token_${orderId}`,
+    paymentUrl: `https://mock-payment.example.com/${orderId}`,
+  };
+}
+
+/**
  * Initialize payment order with gateway via backend
  * Calls your backend server which then calls Cashfree API
  */
@@ -40,9 +73,16 @@ export async function createPaymentOrder(
   customerPhone: string = '9999999999', // Get from user's profile
   customerName: string = 'User' // Get from user's profile
 ): Promise<PaymentOrder> {
+  // Use mock payments if enabled (for testing without backend)
+  if (USE_MOCK_PAYMENTS) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return createMockPaymentOrder(amount, recipient, note);
+  }
+
   try {
     console.log('🔄 Creating payment order:', { amount, recipient, customerPhone, customerName });
-    
+
     const response = await fetch(`${API_BASE_URL}/create-order`, {
       method: 'POST',
       headers: {
@@ -59,11 +99,11 @@ export async function createPaymentOrder(
     });
 
     console.log('📡 Response status:', response.status);
-    
+
     // Handle non-JSON responses (like ngrok error pages)
     const text = await response.text();
     console.log('📦 Response text:', text.substring(0, 200));
-    
+
     let data;
     try {
       data = JSON.parse(text);
@@ -71,7 +111,7 @@ export async function createPaymentOrder(
       console.error('❌ Failed to parse response as JSON:', text.substring(0, 500));
       throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
     }
-    
+
     console.log('📦 Response data:', data);
 
     if (!data.success) {

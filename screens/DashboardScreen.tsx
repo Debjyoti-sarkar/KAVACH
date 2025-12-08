@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWakeWord } from "@/hooks/useWakeWord";
+import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -36,6 +37,51 @@ export default function DashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
   const { voiceGuideEnabled, toggleVoiceGuide, isOnline, setOnlineStatus, userData } = useAuth();
+
+  // NexaSafe tracking
+  const { trackScreenVisit, trackTap, trackTapDuration, trackSwipe, isSessionActive } = useNexaSafe();
+
+  // Tap timing refs
+  const tapStartTime = useRef<number>(0);
+  const scrollStartY = useRef<number>(0);
+  const scrollStartTime = useRef<number>(0);
+
+  // Track screen visit on mount
+  useEffect(() => {
+    if (isSessionActive) {
+      trackScreenVisit('Dashboard');
+    }
+  }, [isSessionActive]);
+
+  // Handle tap start (for duration tracking)
+  const handleTapStart = (e: GestureResponderEvent) => {
+    tapStartTime.current = Date.now();
+  };
+
+  // Handle tap end with tracking
+  const handleTapEnd = (e: GestureResponderEvent, zone: string = 'active') => {
+    if (isSessionActive) {
+      const { locationX, locationY } = e.nativeEvent;
+      const duration = Date.now() - tapStartTime.current;
+      trackTap('Dashboard', locationX, locationY, zone);
+      trackTapDuration('Dashboard', duration);
+    }
+  };
+
+  // Handle scroll start
+  const handleScrollBegin = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollStartY.current = e.nativeEvent.contentOffset.y;
+    scrollStartTime.current = Date.now();
+  };
+
+  // Handle scroll end
+  const handleScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isSessionActive) {
+      const endY = e.nativeEvent.contentOffset.y;
+      const duration = Date.now() - scrollStartTime.current;
+      trackSwipe(scrollStartY.current, endY, duration);
+    }
+  };
 
   // Wake word: "Hey Nexa"
   useWakeWord(() => {
@@ -74,12 +120,17 @@ export default function DashboardScreen() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 60, paddingBottom: insets.bottom + Spacing.xl }}
+        onScrollBeginDrag={handleScrollBegin}
+        onScrollEndDrag={handleScrollEnd}
+        onMomentumScrollEnd={handleScrollEnd}
       >
         <View style={styles.container}>
           {/* ----------------------------- HEADER WITH CONTROLS ------------------------------ */}
           <View style={styles.headerControls}>
             <SOSButton onPress={() => navigation.navigate("SOS")} />
             <Pressable
+              onPressIn={handleTapStart}
+              onPressOut={(e) => handleTapEnd(e, 'settings-button')}
               onPress={() => {
                 speak("Settings");
                 navigation.navigate("Settings");
@@ -178,6 +229,8 @@ export default function DashboardScreen() {
             </Pressable>
 
             <Pressable
+              onPressIn={handleTapStart}
+              onPressOut={(e) => handleTapEnd(e, 'send-money-button')}
               onPress={() => {
                 speak("Send Money");
                 navigation.navigate("SendMoney");
@@ -197,6 +250,47 @@ export default function DashboardScreen() {
             >
               <Feather name="credit-card" size={28} color="#FFF" />
               <ThemedText style={styles.controlLabel}>Balance</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ----------------------------- SECURITY & ANALYTICS ------------------------------ */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="h4" style={{ color: "#1A1A1A" }}>Security & Analytics</ThemedText>
+          </View>
+          <View style={styles.controlsRow}>
+            <Pressable
+              onPress={() => {
+                speak("Security Dashboard");
+                navigation.navigate("SecurityDashboard");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#9C27B0" }]}
+            >
+              <Feather name="shield" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>SECURITY{"\n"}DASHBOARD</ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                speak("Behavior Analytics");
+                navigation.navigate("BehaviorAnalytics");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#673AB7" }]}
+            >
+              <Feather name="activity" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>BEHAVIOR{"\n"}ANALYTICS</ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                speak("QR Scanner");
+                navigation.navigate("QRScanner");
+              }}
+              style={[styles.controlButton, { backgroundColor: "#00BCD4" }]}
+            >
+              <Feather name="maximize" size={28} color="#FFF" />
+              <ThemedText style={styles.controlLabel}>QR{"\n"}SCANNER</ThemedText>
             </Pressable>
           </View>
         </View>

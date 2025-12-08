@@ -63,7 +63,6 @@ app.get("/health", (req, res) => {
 // ---- PAYMENT ROUTES ----
 app.use("/api/payment", paymentRouter);
 
-<<<<<<< HEAD
 // ---- FRAUD DETECTION / BEHAVIOR ANALYSIS ROUTES ----
 app.use("/api/fraud", fraudDetectionRouter);
 
@@ -72,16 +71,6 @@ app.use("/api/sms", smsFraudRouter);
 
 // ---- AADHAAR / DIGILOCKER VERIFICATION ROUTES ----
 app.use("/api/aadhaar", aadhaarRouter);
-=======
-// ---- FRAUD DETECTION / BEHAVIOR ANALYSIS ROUTES ----
-app.use("/api/fraud", fraudDetectionRouter);
-
-// ---- SMS FRAUD DETECTION ROUTES ----
-app.use("/api/sms", smsFraudRouter);
-
-// ---- AADHAAR / DIGILOCKER VERIFICATION ROUTES ----
-app.use("/api/aadhaar", aadhaarRouter);
->>>>>>> 218b622 (Added Aadhaar KYC, OTP security, behavior & fraud analysis)
 
 // ============================================================
 // 🔥 REAL STT USING GOOGLE GEMINI + FFMPEG CONVERSION

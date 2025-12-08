@@ -1,5 +1,5 @@
-import React from "react";
-import { View, StyleSheet, Pressable, Switch, Alert } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, Switch, Alert, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -9,6 +9,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -55,6 +56,35 @@ export default function SettingsScreen() {
   const { t, language, languages, setLanguage } = useLanguage();
   const { voiceGuideEnabled, toggleVoiceGuide, userData, logout } = useAuth();
 
+  // NexaSafe tracking
+  const { trackScreenVisit, trackTap, trackTapDuration, trackSwipe, isSessionActive, endSession } = useNexaSafe();
+
+  // Tap timing refs
+  const tapStartTime = useRef<number>(0);
+  const scrollStartY = useRef<number>(0);
+  const scrollStartTime = useRef<number>(0);
+
+  // Track screen visit on mount
+  useEffect(() => {
+    if (isSessionActive) {
+      trackScreenVisit('Settings');
+    }
+  }, [isSessionActive]);
+
+  // Handle tap tracking
+  const handleTapStart = () => {
+    tapStartTime.current = Date.now();
+  };
+
+  const handleTapEnd = (e: GestureResponderEvent, zone: string = 'active') => {
+    if (isSessionActive) {
+      const { locationX, locationY } = e.nativeEvent;
+      const duration = Date.now() - tapStartTime.current;
+      trackTap('Settings', locationX, locationY, zone);
+      trackTapDuration('Settings', duration);
+    }
+  };
+
   const currentLanguage = languages.find((l) => l.code === language);
 
   const handleLogout = () => {
@@ -67,6 +97,8 @@ export default function SettingsScreen() {
           text: t("logout"),
           style: "destructive",
           onPress: async () => {
+            // End NexaSafe session on logout
+            await endSession();
             await logout();
             navigation.reset({
               index: 0,
@@ -161,6 +193,18 @@ export default function SettingsScreen() {
             title="Aadhaar Verification"
             subtitle={userData?.aadhaarLinked ? "Verified" : "Not linked"}
             onPress={() => navigation.navigate("AadhaarVerification")}
+          />
+          <SettingsItem
+            icon="activity"
+            title="Security Dashboard"
+            subtitle="View security alerts & risk score"
+            onPress={() => navigation.navigate("SecurityDashboard")}
+          />
+          <SettingsItem
+            icon="cpu"
+            title="Behavior Analytics"
+            subtitle="BAA, cursor & cognitive analysis"
+            onPress={() => navigation.navigate("BehaviorAnalytics")}
           />
         </View>
       </View>

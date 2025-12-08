@@ -22,6 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { verifySecurePin } from "@/utils/secureManager";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
@@ -35,6 +36,9 @@ export default function LoginScreen() {
 
   //  🔥 NEW
   const { userData, login, completeReauth } = useAuth();
+
+  // NexaSafe integration for failed PIN tracking
+  const { trackFailedPin, trackFailedAuth, startSession, restoreTrust } = useNexaSafe();
 
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -85,14 +89,23 @@ export default function LoginScreen() {
         // 🔥 NEW — unlock app
         completeReauth();
 
+        // NexaSafe: Start fresh session after successful login and restore trust
+        startSession();
+        restoreTrust();
+
         await login();
         navigation.reset({
           index: 0,
           routes: [{ name: "Dashboard" }],
         });
+      } else {
+        // NexaSafe: Track failed biometric auth
+        trackFailedAuth();
       }
     } catch (error) {
       console.log("Biometric login error:", error);
+      // NexaSafe: Track failed biometric auth on error
+      trackFailedAuth();
     }
   };
 
@@ -114,6 +127,10 @@ export default function LoginScreen() {
       // 🔥 NEW
       completeReauth();
 
+      // NexaSafe: Start fresh session after successful login and restore trust
+      startSession();
+      restoreTrust();
+
       await login();
       navigation.reset({
         index: 0,
@@ -128,6 +145,10 @@ export default function LoginScreen() {
       // 🔥 NEW
       completeReauth();
 
+      // NexaSafe: Start fresh session after successful login and restore trust
+      startSession();
+      restoreTrust();
+
       await login();
       navigation.reset({
         index: 0,
@@ -138,6 +159,10 @@ export default function LoginScreen() {
 
     // Incorrect PIN
     setPinError(true);
+
+    // NexaSafe: Track failed PIN attempt
+    trackFailedPin();
+
     shakeAnimation.value = withSequence(
       withSpring(-10, { damping: 3, stiffness: 400 }),
       withSpring(10, { damping: 3, stiffness: 400 }),

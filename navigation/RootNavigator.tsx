@@ -32,7 +32,12 @@ import HelpFaqScreen from "@/screens/HelpFaqScreen";
 import ContactSupportScreen from "@/screens/ContactSupportScreen";
 import TermsPrivacyScreen from "@/screens/TermsPrivacyScreen";
 import ContactPickerScreen from "@/screens/ContactPickerScreen";
+import SecurityDashboardScreen from "@/screens/SecurityDashboardScreen";
+import BehaviorAnalyticsDashboard from "@/screens/BehaviorAnalyticsDashboard";
+import FraudAlertScreen from "@/screens/FraudAlertScreen";
+import SMSFraudDashboard from "@/screens/SMSFraudDashboard";
 import { PaymentOrder } from "@/services/paymentGateway";
+import { FraudAnalysis } from "@/services/RealTimeSMSMonitor";
 
 export type RootStackParamList = {
   LanguageSelection: undefined;
@@ -58,6 +63,18 @@ export type RootStackParamList = {
   HelpFaq: undefined;
   ContactSupport: undefined;
   TermsPrivacy: undefined;
+  SecurityDashboard: undefined;
+  BehaviorAnalytics: undefined;
+  FraudAlert: {
+    recordId?: string;
+    sms?: {
+      sender: string;
+      body: string;
+      timestamp: number;
+    };
+    analysis?: FraudAnalysis;
+  } | undefined;
+  SMSFraudDashboard: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -267,6 +284,34 @@ export default function RootNavigator() {
           headerTitle: "Payment",
           headerBackVisible: false,
         }}
+      />
+
+      <Stack.Screen
+        name="SecurityDashboard"
+        component={SecurityDashboardScreen}
+        options={{ headerTitle: "Security Dashboard" }}
+      />
+
+      <Stack.Screen
+        name="BehaviorAnalytics"
+        component={BehaviorAnalyticsDashboard}
+        options={{ headerTitle: "Behavior Analytics" }}
+      />
+
+      <Stack.Screen
+        name="FraudAlert"
+        component={FraudAlertScreen}
+        options={{
+          headerTitle: "Fraud Alert",
+          presentation: "modal",
+          headerBackVisible: true,
+        }}
+      />
+
+      <Stack.Screen
+        name="SMSFraudDashboard"
+        component={SMSFraudDashboard}
+        options={{ headerTitle: "SMS Protection" }}
       />
     </Stack.Navigator>
   );

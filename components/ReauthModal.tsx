@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
-import { behaviorAnalysis } from '../services/behaviorAnalysis';
+import { verifySecurePin } from '@/utils/secureManager';
 
 interface ReauthModalProps {
   visible: boolean;
@@ -90,7 +90,6 @@ const ReauthModal: React.FC<ReauthModalProps> = ({
         await handleAuthSuccess('biometric');
       } else {
         setAttempts(prev => prev + 1);
-        await behaviorAnalysis.trackAuthEvent('biometric', false);
 
         if (result.error === 'user_cancel') {
           setAuthMethod('pin');
@@ -128,7 +127,6 @@ const ReauthModal: React.FC<ReauthModalProps> = ({
         await handleAuthSuccess('pin');
       } else {
         setAttempts(prev => prev + 1);
-        await behaviorAnalysis.trackAuthEvent('pin', false);
         shakeError();
         setError('Incorrect PIN');
         setPin('');
@@ -145,20 +143,12 @@ const ReauthModal: React.FC<ReauthModalProps> = ({
   };
 
   const verifyPin = async (inputPin: string): Promise<boolean> => {
-    // This should verify against the stored PIN hash
-    // Using secureManager.verifySecurePin() in production
-    // For demo, accept any 6-digit PIN
-    return inputPin.length === 6;
+    // Verify against the stored secure PIN
+    return await verifySecurePin(inputPin);
   };
 
   const handleAuthSuccess = async (method: 'pin' | 'biometric') => {
-    await behaviorAnalysis.trackAuthEvent(method, true);
-
-    // Resolve alert if alertId provided
-    if (alertId) {
-      await behaviorAnalysis.resolveAlert(alertId, method, true);
-    }
-
+    console.log(`✅ Reauthentication successful via ${method}`);
     setPin('');
     setAttempts(0);
     setError('');
@@ -166,11 +156,7 @@ const ReauthModal: React.FC<ReauthModalProps> = ({
   };
 
   const handleAuthFailure = async () => {
-    // Resolve alert as failed
-    if (alertId) {
-      await behaviorAnalysis.resolveAlert(alertId, authMethod, false);
-    }
-
+    console.log('❌ Reauthentication failed - max attempts reached');
     setPin('');
     setAttempts(0);
     setError('');

@@ -6,9 +6,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Platform, Alert } from 'react-native';
 import { useSecurityMonitor, SecurityState, SecurityDashboardData } from '../hooks/useSecurityMonitor';
-import { SMSAnalysisResult, SMSFraudAlert } from '../services/smsMonitor';
+import { SMSAnalysisResult, SMSFraudAlert as SMSFraudAlertType } from '../services/smsMonitor';
 import { TransactionAnalysisResult, ReauthCheckResult } from '../services/behaviorAnalysis';
-import SMSFraudAlert from '../components/SMSFraudAlert';
+import SMSFraudAlertComponent from '../components/SMSFraudAlert';
 import ReauthModal from '../components/ReauthModal';
 
 // Context types
@@ -27,7 +27,7 @@ interface SecurityContextType {
   analyzeSms: (message: string, sender?: string) => Promise<SMSAnalysisResult | null>;
   reportSmsSpam: (message: string, sender?: string) => Promise<boolean>;
   requestSmsPermission: () => Promise<boolean>;
-  getSmsAlerts: (limit?: number) => Promise<SMSFraudAlert[] | null>;
+  getSmsAlerts: (limit?: number) => Promise<SMSFraudAlertType[] | null>;
 
   // Dashboard
   getSecurityDashboard: () => Promise<SecurityDashboardData>;
@@ -187,7 +187,7 @@ export function SecurityProvider({
 
       {/* SMS Fraud Alert Modal */}
       {security.state.currentSmsAlert.visible && security.state.currentSmsAlert.analysis && (
-        <SMSFraudAlert
+        <SMSFraudAlertComponent
           visible={security.state.currentSmsAlert.visible}
           onClose={handleSmsAlertDismiss}
           smsContent={security.state.currentSmsAlert.message?.body || ''}

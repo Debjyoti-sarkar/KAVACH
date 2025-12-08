@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, Alert, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, TextInput, Pressable, Alert, ActivityIndicator, GestureResponderEvent } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { createPaymentOrder } from "@/services/paymentGateway";
@@ -91,6 +92,45 @@ export default function SendMoneyScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "SendMoney">>();
   const { t } = useLanguage();
 
+  // NexaSafe integration for fraud detection
+  const {
+    trackScreenVisit,
+    trackTransactionStart,
+    trackTransactionEnd,
+    trackTransactionAmount,
+    trackLargeTransaction,
+    trackTap,
+    trackTapDuration,
+    trustScore,
+    riskLevel,
+    isSessionActive,
+  } = useNexaSafe();
+
+  // Track tap timing for behavioral analysis
+  const tapStartTime = useRef<number>(0);
+
+  // Track screen visit on mount
+  useEffect(() => {
+    if (isSessionActive) {
+      trackScreenVisit('SendMoney');
+    }
+  }, [isSessionActive]);
+
+  // Handle tap start (for duration tracking)
+  const handleTapStart = () => {
+    tapStartTime.current = Date.now();
+  };
+
+  // Handle tap end with tracking
+  const handleTapEnd = (e: GestureResponderEvent, zone: string = 'active') => {
+    if (isSessionActive) {
+      const { locationX, locationY } = e.nativeEvent;
+      const duration = Date.now() - tapStartTime.current;
+      trackTap('SendMoney', locationX, locationY, zone);
+      trackTapDuration('SendMoney', duration);
+    }
+  };
+
   const [recipient, setRecipient] = useState(route.params?.recipient || "");
   const [amount, setAmount] = useState(route.params?.amount || "");
   const [note, setNote] = useState("");
@@ -135,12 +175,33 @@ export default function SendMoneyScreen() {
       Alert.alert("Missing Information", "Please enter recipient and amount");
       return;
     }
+
+    // NexaSafe: Track transaction amount and check for large transactions
+    trackTransactionAmount(amount);
+    const amountNum = parseFloat(amount);
+    if (amountNum >= 50000) {
+      trackLargeTransaction(amountNum);
+    }
+
+    // NexaSafe: Check trust score before proceeding
+    if (riskLevel === 'danger') {
+      Alert.alert(
+        "Security Alert",
+        "Unusual activity detected. Please verify your identity to proceed.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     setShowConfirmation(true);
   };
 
   const handleConfirmPayment = async () => {
     try {
       setIsProcessing(true);
+
+      // NexaSafe: Mark transaction start
+      trackTransactionStart();
 
       // Check if face authentication is required for high-value transactions
       if (needsFaceAuth) {
@@ -171,9 +232,15 @@ export default function SendMoneyScreen() {
         note || undefined
       );
 
+      // NexaSafe: Mark transaction end (before navigation)
+      trackTransactionEnd();
+
       // Navigate to payment processing screen
       navigation.navigate("PaymentProcessing", { paymentOrder });
     } catch (error) {
+      // NexaSafe: Mark transaction end on error too
+      trackTransactionEnd();
+
       Alert.alert(
         "Error",
         "Failed to initiate payment. Please try again.",
@@ -360,13 +427,23 @@ export default function SendMoneyScreen() {
         />
       </View>
 
-      <Button
+      <Pressable
+        onPressIn={handleTapStart}
+        onPressOut={(e) => handleTapEnd(e, 'review-payment-button')}
         onPress={handleReviewPayment}
         disabled={!recipient || !amount}
-        style={{ backgroundColor: NexaVaultColors.primary, marginTop: Spacing.xl }}
+        style={[
+          styles.reviewButton,
+          {
+            backgroundColor: (!recipient || !amount) ? '#ccc' : NexaVaultColors.primary,
+            marginTop: Spacing.xl
+          }
+        ]}
       >
-        {t("reviewPayment")}
-      </Button>
+        <ThemedText style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+          {t("reviewPayment")}
+        </ThemedText>
+      </Pressable>
     </ScreenKeyboardAwareScrollView>
   );
 }
@@ -516,5 +593,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: Spacing.lg,
     width: "100%",
+  },
+  reviewButton: {
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: BorderRadius.full,
   },
 });
