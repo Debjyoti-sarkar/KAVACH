@@ -1,16 +1,36 @@
-// utils/firebaseConfig.js
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+// utils/firebaseConfig.ts
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCBFZJvo-u5hb0Zhjso2ok5x_yS-2FPQq0",
-  authDomain: "nexavault-dfd20.firebaseapp.com",
-  projectId: "nexavault-dfd20",
-  storageBucket: "nexavault-dfd20.firebasestorage.app",
-  messagingSenderId: "164623870538",
-  appId: "1:164623870538:web:3925057c35164c9b7254b3",
-  measurementId: "G-T10HHXC50R"
+  apiKey: "AIzaSyCWVRuKqklAk1w86CCG8pBu16n_mgYy2YM",
+  authDomain: "nexavault-948e8.firebaseapp.com",
+  projectId: "nexavault-948e8",
+  storageBucket: "nexavault-948e8.firebasestorage.app",
+  messagingSenderId: "66175020848",
+  appId: "1:66175020848:web:80c9eb920e3b0a345022f5",
+  measurementId: "G-0643THWYHB"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Initialize Firebase app (singleton pattern)
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+// Initialize Auth with persistence for React Native
+let auth: ReturnType<typeof getAuth>;
+if (Platform.OS === "web") {
+  auth = getAuth(app);
+} else {
+  // Use AsyncStorage for persistence on mobile
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (error) {
+    // Auth already initialized
+    auth = getAuth(app);
+  }
+}
+
+export { auth };

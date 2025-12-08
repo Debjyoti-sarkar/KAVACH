@@ -6,6 +6,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "expo-secure-store";
+import * as ScreenCapture from "expo-screen-capture";
 
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -23,12 +24,34 @@ function AppContent() {
   const { isLoading, requireReauth } = useAuth();
   const { theme, isDark } = useTheme();
 
+  // 🔒 SECURITY: Block screen recording and screenshots globally
+  useEffect(() => {
+    const enableScreenSecurity = async () => {
+      try {
+        await ScreenCapture.preventScreenCaptureAsync();
+        console.log("🔒 Screen capture prevention enabled globally");
+      } catch (error) {
+        console.warn("Failed to enable screen capture prevention:", error);
+      }
+    };
+
+    enableScreenSecurity();
+
+    // Keep it enabled throughout the app lifecycle
+    return () => {
+      // Don't disable on unmount - keep protection active
+    };
+  }, []);
+
   // 🔥 CRUCIAL: Ask for PIN every time the app comes to foreground
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         console.log("📲 App returned to foreground → Reauth required");
         requireReauth();
+
+        // Re-enable screen capture prevention when app becomes active
+        ScreenCapture.preventScreenCaptureAsync().catch(console.warn);
       }
     });
 

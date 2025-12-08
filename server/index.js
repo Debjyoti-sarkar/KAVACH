@@ -1,4 +1,4 @@
-// server/index.js - CLEANED, WORKING VERSION WITH GEMINI STT
+// server/index.js - CLEANED, WORKING VERSION WITH GEMINI STT + BEHAVIOR ANALYSIS
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -11,8 +11,11 @@ import { writeFile, unlink } from "fs/promises";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import mongoose from "mongoose";
 import paymentRouter from "./routes/payment.js";
-import fraudRouter from "./routes/frauddetection.js";
+import fraudDetectionRouter from "./routes/frauddetection.js";
+import smsFraudRouter from "./routes/smsfraud.js";
+import aadhaarRouter from "./routes/aadhaar.js";
 import ttsRouter from "./tts.js";
 
 // Set FFmpeg path
@@ -27,6 +30,12 @@ dotenv.config({ path: join(__dirname, ".env") });
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Connect to MongoDB (for behavior analysis)
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/nexavault";
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log("✅ Connected to MongoDB for Behavior Analysis"))
+  .catch(err => console.log("⚠️ MongoDB connection optional:", err.message));
 
 const app = express();
 app.use(cors());
@@ -54,8 +63,25 @@ app.get("/health", (req, res) => {
 // ---- PAYMENT ROUTES ----
 app.use("/api/payment", paymentRouter);
 
-// ---- FRAUD DETECTION ROUTES ----
-app.use("/api/fraud", fraudRouter);
+<<<<<<< HEAD
+// ---- FRAUD DETECTION / BEHAVIOR ANALYSIS ROUTES ----
+app.use("/api/fraud", fraudDetectionRouter);
+
+// ---- SMS FRAUD DETECTION ROUTES ----
+app.use("/api/sms", smsFraudRouter);
+
+// ---- AADHAAR / DIGILOCKER VERIFICATION ROUTES ----
+app.use("/api/aadhaar", aadhaarRouter);
+=======
+// ---- FRAUD DETECTION / BEHAVIOR ANALYSIS ROUTES ----
+app.use("/api/fraud", fraudDetectionRouter);
+
+// ---- SMS FRAUD DETECTION ROUTES ----
+app.use("/api/sms", smsFraudRouter);
+
+// ---- AADHAAR / DIGILOCKER VERIFICATION ROUTES ----
+app.use("/api/aadhaar", aadhaarRouter);
+>>>>>>> 218b622 (Added Aadhaar KYC, OTP security, behavior & fraud analysis)
 
 // ============================================================
 // 🔥 REAL STT USING GOOGLE GEMINI + FFMPEG CONVERSION
@@ -216,4 +242,18 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`📍 Health: http://localhost:${PORT}/health`);
   console.log(`🎤 Transcribe: POST /assistant/transcribe`);
   console.log(`🧠 Parse: POST /assistant/parse`);
+  console.log(`🔒 Fraud Detection: /api/fraud/*`);
+  console.log(`   - POST /api/fraud/analyze-transaction`);
+  console.log(`   - POST /api/fraud/track-event`);
+  console.log(`   - POST /api/fraud/check-reauth`);
+  console.log(`📱 SMS Fraud Detection: /api/sms/*`);
+  console.log(`   - POST /api/sms/analyze`);
+  console.log(`   - GET /api/sms/alerts/:userId`);
+  console.log(`🆔 Aadhaar Verification: /api/aadhaar/*`);
+  console.log(`   - POST /api/aadhaar/digilocker/auth-url`);
+  console.log(`   - POST /api/aadhaar/digilocker/token`);
+  console.log(`   - POST /api/aadhaar/digilocker/fetch`);
+  console.log(`   - POST /api/aadhaar/request-otp`);
+  console.log(`   - POST /api/aadhaar/verify-otp`);
+  console.log(`   - GET /api/aadhaar/status/:userId`);
 });

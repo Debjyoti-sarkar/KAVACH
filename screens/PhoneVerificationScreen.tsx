@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -6,10 +6,12 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
+import { FirebaseRecaptchaVerifierModal, FirebaseRecaptchaBanner } from "expo-firebase-recaptcha";
 
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
 import { ThemedText } from "@/components/ThemedText";
@@ -17,9 +19,16 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { sendOTP, verifyOTP } from "@/utils/otpManager";
+import { app } from "@/utils/firebaseConfig";
+import { sendFirebaseOTP, verifyFirebaseOTP, clearVerification } from "@/utils/firebaseOtpManager";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
+
+// ==================== OTP BYPASS FLAG ====================
+// Set to true to skip Firebase OTP verification (for testing)
+// Set to false to enable real OTP verification
+const OTP_BYPASS_ENABLED = true;
+// =========================================================
 
 export default function PhoneVerificationScreen() {
   const { theme } = useTheme();
@@ -27,12 +36,15 @@ export default function PhoneVerificationScreen() {
   const { t } = useLanguage();
   const { setPhoneNumber, setAuthStep } = useAuth();
 
+  // Recaptcha ref for Firebase Phone Auth
+  const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const [demoOTP, setDemoOTP] = useState<string | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -47,25 +59,50 @@ export default function PhoneVerificationScreen() {
       return;
     }
 
+    // OTP BYPASS: Skip Firebase verification when enabled
+    if (OTP_BYPASS_ENABLED) {
+      console.log("⚠️ OTP BYPASS ENABLED - Skipping Firebase verification");
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+      setStep("otp");
+      setResendTimer(60);
+      setVerificationId("bypass-mode");
+      Alert.alert(
+        "OTP Bypass Mode",
+        "OTP verification is disabled for testing. Enter any 6-digit code to proceed.",
+        [{ text: "OK" }]
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (!recaptchaVerifier.current) {
+      Alert.alert("Error", "Please wait for the verification system to load");
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await sendOTP(phone);
+      console.log("🚀 Sending OTP to:", phone);
 
-      if (result.success && result.otp) {
+      const result = await sendFirebaseOTP(phone, recaptchaVerifier.current);
+
+      if (result.success && result.verificationId) {
+        setVerificationId(result.verificationId);
         setStep("otp");
         setResendTimer(60);
-        setDemoOTP(result.otp);
-        
+
         Alert.alert(
-          "🎯 OTP Generated",
-          `Your verification code is:\n\n${result.otp}\n\n(No SMS sent)`,
+          "OTP Sent!",
+          `A 6-digit verification code has been sent to +91 ${phone}. Please check your SMS.`,
           [{ text: "OK" }]
         );
       } else {
-        Alert.alert("Error", result.error || "Failed to generate OTP");
+        Alert.alert("Error", result.error || "Failed to send OTP. Please try again.");
       }
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+    } catch (error: any) {
+      console.error("Send OTP error:", error);
+      Alert.alert("Error", error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -78,10 +115,27 @@ export default function PhoneVerificationScreen() {
     }
 
     setLoading(true);
+
+    // OTP BYPASS: Accept any 6-digit code when enabled
+    if (OTP_BYPASS_ENABLED) {
+      console.log("⚠️ OTP BYPASS ENABLED - Accepting any 6-digit code");
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+      console.log("✅ Phone verified (bypass mode)");
+      await setPhoneNumber(phone);
+      setAuthStep("bank_linking");
+      navigation.navigate("BankLinking");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const result = await verifyOTP(phone, otp);
+      console.log("🔍 Verifying OTP...");
+
+      const result = await verifyFirebaseOTP(otp, verificationId || undefined);
 
       if (result.success) {
+        console.log("✅ Phone verified! User ID:", result.userId);
+
         await setPhoneNumber(phone);
         setAuthStep("bank_linking");
         navigation.navigate("BankLinking");
@@ -89,8 +143,9 @@ export default function PhoneVerificationScreen() {
         Alert.alert("Verification Failed", result.error || "Invalid OTP");
         setOtp("");
       }
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+    } catch (error: any) {
+      console.error("Verify OTP error:", error);
+      Alert.alert("Error", error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -99,7 +154,8 @@ export default function PhoneVerificationScreen() {
   const handleResendOtp = () => {
     if (resendTimer > 0) return;
     setOtp("");
-    setDemoOTP(null);
+    clearVerification();
+    setVerificationId(null);
     handleSendOtp();
   };
 
@@ -107,7 +163,8 @@ export default function PhoneVerificationScreen() {
     if (step === "otp") {
       setStep("phone");
       setOtp("");
-      setDemoOTP(null);
+      clearVerification();
+      setVerificationId(null);
       setResendTimer(0);
     } else {
       navigation.goBack();
@@ -116,6 +173,15 @@ export default function PhoneVerificationScreen() {
 
   return (
     <ScreenKeyboardAwareScrollView contentContainerStyle={styles.container}>
+      {/* Firebase Recaptcha Modal - Required for Phone Auth */}
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={app.options}
+        attemptInvisibleVerification={true}
+        title="Verify you're human"
+        cancelLabel="Cancel"
+      />
+
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color={theme.text} />
@@ -127,19 +193,20 @@ export default function PhoneVerificationScreen() {
       </View>
 
       <ThemedText type="h2" style={styles.title}>
-        {step === "phone" ? "Phone Verification" : "Enter Code"}
+        {step === "phone" ? "Phone Verification" : "Enter OTP"}
       </ThemedText>
 
       <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
         {step === "phone"
-          ? "We'll generate a 6-digit verification code"
-          : `Enter the code for +91${phone}`}
+          ? "We'll send a verification code to your phone via SMS"
+          : `Enter the 6-digit code sent to +91 ${phone}`}
       </ThemedText>
 
-      <View style={[styles.demoBanner, { backgroundColor: NexaVaultColors.warning + "20" }]}>
-        <Feather name="info" size={16} color={NexaVaultColors.warning} />
-        <ThemedText type="caption" style={{ color: NexaVaultColors.warning, marginLeft: 8 }}>
-          OTP shown on screen
+      {/* Real SMS indicator */}
+      <View style={[styles.smsBanner, { backgroundColor: NexaVaultColors.success + "20" }]}>
+        <Feather name="check-circle" size={16} color={NexaVaultColors.success} />
+        <ThemedText type="caption" style={{ color: NexaVaultColors.success, marginLeft: 8 }}>
+          Real SMS OTP will be sent to your phone
         </ThemedText>
       </View>
 
@@ -161,38 +228,78 @@ export default function PhoneVerificationScreen() {
             />
           </View>
 
-          <Button onPress={handleSendOtp} disabled={phone.length !== 10 || loading} style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}>
-            {loading ? <ActivityIndicator color="#FFFFFF" /> : "Generate OTP"}
+          <Button
+            onPress={handleSendOtp}
+            disabled={phone.length !== 10 || loading}
+            style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}
+          >
+            {loading ? <ActivityIndicator color="#FFFFFF" /> : "Send OTP"}
           </Button>
+
+          {/* Recaptcha notice */}
+          <View style={styles.recaptchaNotice}>
+            <FirebaseRecaptchaBanner />
+          </View>
         </View>
       ) : (
         <View style={styles.inputSection}>
-          {demoOTP && (
-            <View style={[styles.demoOtpBox, { backgroundColor: NexaVaultColors.success + "15" }]}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>Your OTP:</ThemedText>
-              <ThemedText type="h1" style={{ color: NexaVaultColors.success, letterSpacing: 8 }}>{demoOTP}</ThemedText>
-            </View>
-          )}
+          {/* OTP sent confirmation */}
+          <View style={[styles.otpSentBox, { backgroundColor: NexaVaultColors.primary + "10" }]}>
+            <Feather name="mail" size={20} color={NexaVaultColors.primary} />
+            <ThemedText type="caption" style={{ color: NexaVaultColors.primary, marginLeft: 8 }}>
+              Check your SMS inbox for the OTP
+            </ThemedText>
+          </View>
 
           <View style={styles.otpContainer}>
             {[0, 1, 2, 3, 4, 5].map((index) => (
-              <View key={index} style={[styles.otpBox, { backgroundColor: theme.card, borderColor: otp.length === index ? NexaVaultColors.primary : theme.border, borderWidth: otp.length === index ? 2 : 1 }]}>
+              <View
+                key={index}
+                style={[
+                  styles.otpBox,
+                  {
+                    backgroundColor: theme.card,
+                    borderColor: otp.length === index ? NexaVaultColors.primary : theme.border,
+                    borderWidth: otp.length === index ? 2 : 1
+                  }
+                ]}
+              >
                 <ThemedText type="h3">{otp[index] || ""}</ThemedText>
               </View>
             ))}
           </View>
 
-          <TextInput style={styles.hiddenInput} value={otp} onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ""))} keyboardType="number-pad" maxLength={6} autoFocus />
+          <TextInput
+            style={styles.hiddenInput}
+            value={otp}
+            onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ""))}
+            keyboardType="number-pad"
+            maxLength={6}
+            autoFocus
+          />
 
-          <Button onPress={handleVerifyOtp} disabled={otp.length !== 6 || loading} style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}>
+          <Button
+            onPress={handleVerifyOtp}
+            disabled={otp.length !== 6 || loading}
+            style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}
+          >
             {loading ? <ActivityIndicator color="#FFFFFF" /> : "Verify OTP"}
           </Button>
 
           <View style={styles.resendContainer}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>Didn't see code?</ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Didn't receive the code?
+            </ThemedText>
             <Pressable onPress={handleResendOtp} disabled={resendTimer > 0}>
-              <ThemedText type="small" style={{ color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary, fontWeight: "600", padding: 8 }}>
-                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Generate New"}
+              <ThemedText
+                type="small"
+                style={{
+                  color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary,
+                  fontWeight: "600",
+                  padding: 8
+                }}
+              >
+                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
               </ThemedText>
             </Pressable>
           </View>
@@ -206,19 +313,76 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, paddingHorizontal: Spacing.xl },
   header: { marginBottom: Spacing.xl },
   backButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  iconContainer: { width: 100, height: 100, borderRadius: 50, alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: Spacing.xl },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: Spacing.xl
+  },
   title: { textAlign: "center", marginBottom: Spacing.sm },
-  subtitle: { textAlign: "center", marginBottom: Spacing.xl },
-  demoBanner: { flexDirection: "row", alignItems: "center", padding: Spacing.md, borderRadius: BorderRadius.sm, marginBottom: Spacing.lg },
+  subtitle: { textAlign: "center", marginBottom: Spacing.lg },
+  smsBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.lg
+  },
   inputSection: { flex: 1 },
-  phoneInputContainer: { flexDirection: "row", marginBottom: Spacing.xl, gap: Spacing.sm },
-  countryCode: { paddingHorizontal: Spacing.lg, justifyContent: "center", borderRadius: BorderRadius.sm },
+  phoneInputContainer: {
+    flexDirection: "row",
+    marginBottom: Spacing.xl,
+    gap: Spacing.sm
+  },
+  countryCode: {
+    paddingHorizontal: Spacing.lg,
+    justifyContent: "center",
+    borderRadius: BorderRadius.sm
+  },
   countryCodeText: { fontSize: 16, fontWeight: "600" },
-  phoneInput: { flex: 1, height: 56, paddingHorizontal: Spacing.lg, borderRadius: BorderRadius.sm, borderWidth: 1, fontSize: 16 },
+  phoneInput: {
+    flex: 1,
+    height: 56,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    fontSize: 16
+  },
   button: { marginBottom: Spacing.lg },
-  demoOtpBox: { padding: Spacing.xl, borderRadius: BorderRadius.md, alignItems: "center", marginBottom: Spacing.xl, ...Shadows.md },
-  otpContainer: { flexDirection: "row", justifyContent: "center", gap: Spacing.sm, marginBottom: Spacing.xl },
-  otpBox: { width: 50, height: 60, alignItems: "center", justifyContent: "center", borderRadius: BorderRadius.sm, ...Shadows.sm },
+  recaptchaNotice: {
+    marginTop: Spacing.md,
+    alignItems: "center"
+  },
+  otpSentBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xl
+  },
+  otpContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl
+  },
+  otpBox: {
+    width: 50,
+    height: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: BorderRadius.sm,
+    ...Shadows.sm
+  },
   hiddenInput: { position: "absolute", opacity: 0 },
-  resendContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: Spacing.sm, marginTop: Spacing.md },
+  resendContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.md
+  },
 });

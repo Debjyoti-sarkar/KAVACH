@@ -63,7 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    loadState();
+    // TEMPORARY: Reset onboarding to test Phone Verification
+    // Remove this block after testing!
+    const resetAndLoad = async () => {
+      console.log("🔄 RESETTING ONBOARDING FOR TESTING...");
+      await AsyncStorage.removeItem(AUTH_KEY);
+      await AsyncStorage.removeItem(USER_KEY);
+      await AsyncStorage.removeItem(ONBOARDING_KEY);
+      console.log("✅ Onboarding reset complete!");
+      loadState();
+    };
+    resetAndLoad();
   }, []);
 
   const loadState = async () => {

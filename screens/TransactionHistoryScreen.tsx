@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
+import { useScreenSecurity } from "@/hooks/useScreenSecurity";
 
 type TransactionType = "sent" | "received" | "refund" | "failed";
 
@@ -179,6 +180,9 @@ export default function TransactionHistoryScreen() {
   const { t } = useLanguage();
   const { paddingTop, paddingBottom } = useScreenInsets();
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+
+  // Enable screen security for transaction history (sensitive financial info)
+  useScreenSecurity(true);
 
   const filteredTransactions = MOCK_TRANSACTIONS.filter((tx) => {
     if (filter === "all") return true;

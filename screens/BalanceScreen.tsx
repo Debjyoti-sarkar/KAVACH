@@ -13,6 +13,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { useScreenSecurity } from "@/hooks/useScreenSecurity";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -96,6 +97,9 @@ export default function BalanceScreen() {
   const { userData } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
+
+  // Enable screen security for balance screen (sensitive financial info)
+  useScreenSecurity(true);
 
   const accounts = [
     {

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TextInput, Pressable, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, TextInput, Pressable, Alert, ActivityIndicator } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -17,6 +17,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { createPaymentOrder } from "@/services/paymentGateway";
+import {
+  authenticateHighValueTransaction,
+  requiresFaceAuth,
+  isFaceAuthAvailable,
+  FACE_AUTH_THRESHOLD,
+} from "@/utils/securityUtils";
 
 const RECENT_CONTACTS = [
   { id: "1", name: "Rahul Sharma", upiId: "rahul@upi", avatar: "R" },
@@ -92,9 +98,11 @@ export default function SendMoneyScreen() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [contactName, setContactName] = useState(route.params?.contactName || "");
+  const [faceAuthAvailable, setFaceAuthAvailable] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // Update recipient when route params change
-  React.useEffect(() => {
+  // Update recipient and contactName when route params change
+  useEffect(() => {
     if (route.params?.recipient) {
       setRecipient(route.params.recipient);
     }
@@ -103,9 +111,23 @@ export default function SendMoneyScreen() {
     }
   }, [route.params]);
 
+  // Check if face authentication is available on mount
+  useEffect(() => {
+    const checkFaceAuth = async () => {
+      const { available } = await isFaceAuthAvailable();
+      setFaceAuthAvailable(available);
+    };
+    checkFaceAuth();
+  }, []);
+
+  // Check if current amount requires face auth
+  const amountValue = parseFloat(amount) || 0;
+  const needsFaceAuth = requiresFaceAuth(amountValue);
+
   const handleContactSelect = (contact: typeof RECENT_CONTACTS[0]) => {
     setSelectedContact(contact.id);
     setRecipient(contact.upiId);
+    setContactName(contact.name);
   };
 
   const handleReviewPayment = () => {
@@ -119,6 +141,28 @@ export default function SendMoneyScreen() {
   const handleConfirmPayment = async () => {
     try {
       setIsProcessing(true);
+
+      // Check if face authentication is required for high-value transactions
+      if (needsFaceAuth) {
+        setIsAuthenticating(true);
+
+        const authResult = await authenticateHighValueTransaction(
+          amountValue,
+          recipient
+        );
+
+        setIsAuthenticating(false);
+
+        if (!authResult.success && !authResult.skipped) {
+          Alert.alert(
+            "Authentication Required",
+            authResult.error || "Face authentication is required for transactions above ₹10,000",
+            [{ text: "OK" }]
+          );
+          setIsProcessing(false);
+          return;
+        }
+      }
 
       // Create payment order
       const paymentOrder = await createPaymentOrder(
@@ -137,6 +181,7 @@ export default function SendMoneyScreen() {
       );
     } finally {
       setIsProcessing(false);
+      setIsAuthenticating(false);
     }
   };
 
@@ -181,13 +226,42 @@ export default function SendMoneyScreen() {
             ) : null}
           </View>
 
+          {/* Face Authentication Notice for High-Value Transactions */}
+          {needsFaceAuth && (
+            <View style={[styles.faceAuthNotice, { backgroundColor: '#FFF3E0', borderColor: '#FF9800' }]}>
+              <Feather name="shield" size={20} color="#FF9800" />
+              <View style={{ marginLeft: Spacing.sm, flex: 1 }}>
+                <ThemedText style={{ fontWeight: '600', color: '#E65100', fontSize: 13 }}>
+                  Face Authentication Required
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: '#F57C00' }}>
+                  Transactions above ₹{FACE_AUTH_THRESHOLD.toLocaleString('en-IN')} require biometric verification
+                </ThemedText>
+              </View>
+            </View>
+          )}
+
           <View style={styles.confirmButtons}>
             <Button
               onPress={handleConfirmPayment}
-              disabled={isProcessing}
+              disabled={isProcessing || isAuthenticating}
               style={{ backgroundColor: NexaVaultColors.primary, flex: 1 }}
             >
-              {isProcessing ? "Processing..." : t("confirm")}
+              {isAuthenticating ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                  <ThemedText style={{ color: '#fff' }}>Verifying...</ThemedText>
+                </View>
+              ) : isProcessing ? (
+                "Processing..."
+              ) : needsFaceAuth ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Feather name="shield" size={18} color="#fff" style={{ marginRight: 8 }} />
+                  <ThemedText style={{ color: '#fff' }}>Verify & Pay</ThemedText>
+                </View>
+              ) : (
+                t("confirm")
+              )}
             </Button>
             <Pressable
               onPress={() => setShowConfirmation(false)}
@@ -433,5 +507,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+  },
+  faceAuthNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    width: "100%",
   },
 });
