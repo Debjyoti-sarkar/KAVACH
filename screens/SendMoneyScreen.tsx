@@ -91,6 +91,17 @@ export default function SendMoneyScreen() {
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [contactName, setContactName] = useState(route.params?.contactName || "");
+
+  // Update recipient when route params change
+  React.useEffect(() => {
+    if (route.params?.recipient) {
+      setRecipient(route.params.recipient);
+    }
+    if (route.params?.contactName) {
+      setContactName(route.params.contactName);
+    }
+  }, [route.params]);
 
   const handleContactSelect = (contact: typeof RECENT_CONTACTS[0]) => {
     setSelectedContact(contact.id);
