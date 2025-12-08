@@ -13,46 +13,23 @@ import {
   Alert,
   StyleSheet,
 } from "react-native";
-import { Audio } from "expo-av"; // ✔ correct import
-import * as FileSystem from "expo-file-system";
+
+import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
-import { TRANSCRIBE_URL, PARSE_URL } from "../services/assistant";
-import * as Speech from "expo-speech";
-import { useNavigation } from "@react-navigation/native";
+import { TRANSCRIBE_URL } from "../services/assistant";
 
 export type VoiceRecorderHandle = {
   start: () => Promise<void>;
-  stop: () => Promise<void>;
+  stop: () => Promise<string | null>;
   isRecording: () => boolean;
 };
 
-export interface VoiceRecorderProps {
-  onTranscribed: (text: string) => void;
-  useAssistantEndpoint?: boolean;
-  enableAssistantFlow?: boolean;
-  showUI?: boolean;
-  primaryColor?: string;
-}
-
-const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
-  (
-    {
-      onTranscribed,
-      useAssistantEndpoint = true,
-      enableAssistantFlow = false,
-      showUI = true,
-      primaryColor = "#007AFF",
-    },
-    ref
-  ) => {
-    const navigation = useNavigation<any>();
-
+const VoiceRecorder = forwardRef<VoiceRecorderHandle, any>(
+  ({ onTranscribed, primaryColor = "#007AFF" }, ref) => {
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
-    const [status, setStatus] = useState<"idle" | "recording" | "sending">(
-      "idle"
-    );
+    const [isSending, setIsSending] = useState(false);
 
-    // Cleanup on unmount
+    /** Clean up properly */
     useEffect(() => {
       return () => {
         if (recording) {
@@ -61,69 +38,65 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
       };
     }, [recording]);
 
-    // -----------------------------
-    // 🟢 START RECORDING
-    // -----------------------------
-    async function startRecording() {
+    /** --------------------------
+     *  START RECORDING
+     * ---------------------------*/
+    const start = async () => {
       try {
-        console.log("🎤 Requesting mic permissions…");
-
-        const { status } = await Audio.requestPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert(
-            "Microphone Permission Required",
-            "Enable microphone permission in settings."
-          );
-          return;
+        if (recording) {
+          console.log("⚠️ Recorder already active. Stopping previous instance.");
+          await recording.stopAndUnloadAsync().catch(() => {});
+          setRecording(null);
         }
 
-        console.log("🎤 Permissions granted");
+        console.log("🎤 Requesting mic permission…");
+
+        const permission = await Audio.requestPermissionsAsync();
+        if (permission.status !== "granted") {
+          Alert.alert("Microphone permission required.");
+          return;
+        }
 
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
         });
 
-        console.log("🎤 Audio mode set.");
-
         const rec = new Audio.Recording();
 
+        // Required fix so Expo doesn't throw errors
         await rec.prepareToRecordAsync(
           Audio.RecordingOptionsPresets.HIGH_QUALITY
         );
 
         await rec.startAsync();
-        console.log("🎤 Recording started!");
-
+        console.log("🎤 Recording started");
         setRecording(rec);
-        setStatus("recording");
       } catch (err) {
-        console.log("🚨 Recording start error:", err);
-        Alert.alert(
-          "Error",
-          "Could not start recording. Please check microphone permission and try again."
-        );
+        console.log("❌ Start error:", err);
       }
-    }
+    };
 
-    // -----------------------------
-    // 🛑 STOP RECORDING
-    // -----------------------------
-    async function stopRecording() {
+    /** --------------------------
+     *  STOP & UPLOAD
+     * ---------------------------*/
+    const stop = async () => {
       try {
-        if (!recording) return;
+        if (!recording) return null;
 
-        setStatus("sending");
+        setIsSending(true);
+
         await recording.stopAndUnloadAsync();
-
         const uri = recording.getURI();
-        console.log("🎤 File URI:", uri);
-
         setRecording(null);
 
-        if (!uri) throw new Error("No audio file URI");
+        if (!uri) {
+          console.log("❌ No URI from recorder");
+          return null;
+        }
 
-        // Convert audio → FormData
+        console.log("🎤 File URI:", uri);
+
         const formData = new FormData();
         formData.append("audio", {
           uri,
@@ -131,66 +104,69 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
           type: "audio/m4a",
         } as any);
 
-        // ------------------------------------------------------
-        // 🔥 IMPORTANT FIX: prevent Expo from corrupting uploads
-        // ------------------------------------------------------
+        console.log("📡 Uploading audio →", TRANSCRIBE_URL);
+
         const res = await fetch(TRANSCRIBE_URL, {
           method: "POST",
-          headers: undefined, // << 🔥 FIX HERE
+          headers: undefined,
           body: formData,
         });
 
         const json = await res.json();
-        const text = json?.text || "";
+        const text = json?.text?.trim() || "";
 
-        console.log("📝 Transcribed text:", text);
+        console.log("📝 Transcript:", text);
+
+        if (text.length === 0) {
+          console.log("⚠️ Empty transcription");
+        }
+
         onTranscribed(text);
+        return text;
       } catch (err) {
-        console.log("🚨 Stop recording error:", err);
+        console.log("❌ Stop/upload error:", err);
         Alert.alert("Error", "Failed to process audio.");
+        return null;
       } finally {
-        setStatus("idle");
+        setIsSending(false);
       }
-    }
+    };
 
-    // Expose methods to parent
+    /** Expose to parent */
     useImperativeHandle(ref, () => ({
-      start: startRecording,
-      stop: stopRecording,
-      isRecording: () => status === "recording",
+      start,
+      stop,
+      isRecording: () => !!recording,
     }));
-
-    // UI
-    if (!showUI) return null;
 
     return (
       <View style={styles.container}>
         <TouchableOpacity
+          onPress={() => {
+            if (recording) stop();
+            else start();
+          }}
           style={[
             styles.micButton,
-            { backgroundColor: status === "recording" ? "#FF3B30" : primaryColor },
+            { backgroundColor: recording ? "#E53935" : primaryColor },
           ]}
-          disabled={status === "sending"}
-          onPress={() => {
-            if (status === "recording") stopRecording();
-            else startRecording();
-          }}
+          disabled={isSending}
         >
-          {status === "sending" ? (
+          {isSending ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Ionicons
-              name={status === "recording" ? "stop" : "mic"}
+              name={recording ? "stop" : "mic"}
               size={28}
               color="#fff"
             />
           )}
         </TouchableOpacity>
 
-        <Text style={styles.statusText}>
-          {status === "idle" && "Tap to record"}
-          {status === "recording" && "Recording… Tap to stop"}
-          {status === "sending" && "Processing audio…"}
+        <Text style={styles.status}>
+          {recording && !isSending && "Recording… Tap to stop"}
+          {!recording && !isSending && "Tap to record"}
+          {isSending && "Processing…"}
         </Text>
       </View>
     );
@@ -198,16 +174,16 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, VoiceRecorderProps>(
 );
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", padding: 12 },
+  container: { alignItems: "center", paddingVertical: 12 },
   micButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
   },
-  statusText: { marginTop: 8, fontSize: 14, color: "#666" },
+  status: { marginTop: 8, fontSize: 14, color: "#666" },
 });
 
-VoiceRecorder.displayName = "VoiceRecorder";
 export default VoiceRecorder;
+  

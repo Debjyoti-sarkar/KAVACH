@@ -1,10 +1,8 @@
-import { BASE_URL } from './api';
+// Your backend is running on PORT 3001 (NOT 3000)
+export const BASE_URL = "http://192.168.0.180:3001";
 
-// Backend API endpoints for Voice Assistant
-export const BACKEND_URL = BASE_URL;
-export const TRANSCRIBE_URL = `${BACKEND_URL}/assistant/transcribe`;
-export const PARSE_URL = `${BACKEND_URL}/assistant/parse`;
-export const HEALTH_URL = `${BACKEND_URL}/health`;
+export const TRANSCRIBE_URL = BASE_URL + "/assistant/transcribe";
+export const PARSE_URL = BASE_URL + "/assistant/parse";
 
 // Types for API responses
 export interface ParseResponse {

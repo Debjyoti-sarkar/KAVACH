@@ -27,6 +27,8 @@ interface AuthContextType {
   setPhoneNumber: (phone: string) => Promise<void>;
   linkBank: (bankName: string, accountNumber: string) => Promise<void>;
   setupPin: (pin: string) => Promise<void>;
+  enableBiometric: (enabled: boolean) => Promise<void>;
+  linkAadhaar: () => Promise<void>;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
@@ -132,6 +134,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
   };
 
+  const enableBiometric = async (enabled: boolean) => {
+    if (!userData) return;
+    const newUser = { ...userData, biometricEnabled: enabled };
+    setUserData(newUser);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+  };
+
+  const linkAadhaar = async () => {
+    if (!userData) return;
+    const newUser = { ...userData, aadhaarLinked: true };
+    setUserData(newUser);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+  };
+
   const login = async () => {
     await AsyncStorage.setItem(AUTH_KEY, "authenticated");
     setAuthStepState("authenticated");
@@ -154,7 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requireReauth = () => {
     if (hasCompletedOnboarding) {
-      console.log("🔐 requireReauth called - setting needsReauth to true");
+      console.log("🔐 requireReauth called - forcing stop on voice recorder");
+      (global as any).stopVoiceRecording?.();
       setNeedsReauth(true);
     }
   };
@@ -181,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPhoneNumber,
         linkBank,
         setupPin,
+        enableBiometric,
+        linkAadhaar,
         login,
         logout,
         completeOnboarding,
