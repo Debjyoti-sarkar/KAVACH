@@ -12,6 +12,7 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import paymentRouter from "./routes/payment.js";
+import fraudRouter from "./routes/frauddetection.js";
 import ttsRouter from "./tts.js";
 
 // Set FFmpeg path
@@ -52,6 +53,9 @@ app.get("/health", (req, res) => {
 
 // ---- PAYMENT ROUTES ----
 app.use("/api/payment", paymentRouter);
+
+// ---- FRAUD DETECTION ROUTES ----
+app.use("/api/fraud", fraudRouter);
 
 // ============================================================
 // 🔥 REAL STT USING GOOGLE GEMINI + FFMPEG CONVERSION

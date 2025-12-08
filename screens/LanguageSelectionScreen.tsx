@@ -1,219 +1,267 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Switch,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
-
-import { ScreenScrollView } from "@/components/ScreenScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { Button } from "@/components/Button";
-import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
-import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Language } from "@/constants/i18n";
+import { languages, Language, getTranslation } from "@/constants/i18n";
+import { useTheme } from "@/hooks/useTheme";
+import { useTTS } from "@/hooks/useTTS";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+type RootStackParamList = {
+  PhoneVerification: undefined;
+  Dashboard: undefined;
+};
 
-interface LanguageCardProps {
-  code: Language;
-  name: string;
-  nativeName: string;
-  isSelected: boolean;
-  onSelect: () => void;
-}
-
-function LanguageCard({ code, name, nativeName, isSelected, onSelect }: LanguageCardProps) {
-  const { theme } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 150 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 150 });
-  };
-
-  return (
-    <AnimatedPressable
-      onPress={onSelect}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={[
-        styles.languageCard,
-        {
-          backgroundColor: theme.card,
-          borderColor: isSelected ? NexaVaultColors.primary : theme.border,
-          borderWidth: isSelected ? 2 : 1,
-        },
-        animatedStyle,
-      ]}
-    >
-      <View style={styles.languageTextContainer}>
-        <ThemedText style={styles.languageNativeName}>{nativeName}</ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {name}
-        </ThemedText>
-      </View>
-      {isSelected ? (
-        <View style={[styles.checkIcon, { backgroundColor: NexaVaultColors.primary }]}>
-          <Feather name="check" size={16} color="#FFFFFF" />
-        </View>
-      ) : null}
-    </AnimatedPressable>
-  );
-}
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LanguageSelectionScreen() {
+  const navigation = useNavigation<NavigationProp>();
+  const { language, setLanguage } = useLanguage();
   const { theme, isDark } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { language, setLanguage, languages, t } = useLanguage();
-  const { setAuthStep } = useAuth();
+  const { speak } = useTTS();
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(language);
+  const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(true);
 
-  const handleContinue = async () => {
-    await setLanguage(selectedLanguage);
-    setAuthStep("phone_verification");
+  const t = (key: string) => getTranslation(selectedLanguage, key);
+
+  const handleLanguageSelect = (lang: Language) => {
+    setSelectedLanguage(lang);
+    if (voiceGuideEnabled) {
+      const langOption = languages.find((l) => l.code === lang);
+      if (langOption) {
+        speak(`${langOption.name} selected`);
+      }
+    }
+  };
+
+  const handleContinue = () => {
+    setLanguage(selectedLanguage);
+    if (voiceGuideEnabled) {
+      speak(t("continue"));
+    }
     navigation.navigate("PhoneVerification");
   };
 
-  return (
-    <ScreenScrollView contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
-        <Image
-          source={require("../assets/images/icon.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <ThemedText
-          style={[styles.appName, { color: isDark ? theme.text : NexaVaultColors.primary }]}
-        >
-          NEXAVAULT
-        </ThemedText>
-        <ThemedText style={[styles.tagline, { color: theme.textSecondary }]}>
-          {t("taglineNative")}
-        </ThemedText>
-        <ThemedText style={[styles.taglineSmall, { color: theme.textSecondary }]}>
-          {t("tagline")}
-        </ThemedText>
-      </View>
-
-      <View style={styles.content}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          {t("languageSelection")}
-        </ThemedText>
-        <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {t("appWillSpeak")}
-        </ThemedText>
-
-        <View style={styles.languagesGrid}>
-          {languages.map((lang) => (
-            <LanguageCard
-              key={lang.code}
-              code={lang.code}
-              name={lang.name}
-              nativeName={lang.nativeName}
-              isSelected={selectedLanguage === lang.code}
-              onSelect={() => setSelectedLanguage(lang.code)}
-            />
-          ))}
+  const renderLanguageItem = ({ item }: { item: (typeof languages)[0] }) => {
+    const isSelected = selectedLanguage === item.code;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.languageItem,
+          {
+            backgroundColor: isSelected ? theme.primary : theme.backgroundDefault,
+            borderColor: isSelected ? theme.primary : theme.border,
+          },
+        ]}
+        onPress={() => handleLanguageSelect(item.code)}
+        accessibilityLabel={`Select ${item.name}`}
+        accessibilityRole="button"
+      >
+        <View style={styles.languageInfo}>
+          <Text
+            style={[
+              styles.languageName,
+              { color: isSelected ? "#FFFFFF" : theme.text },
+            ]}
+          >
+            {item.name}
+          </Text>
+          <Text
+            style={[
+              styles.nativeName,
+              { color: isSelected ? "#FFFFFF" : theme.textSecondary },
+            ]}
+          >
+            {item.nativeName}
+          </Text>
         </View>
+        {isSelected && (
+          <View style={styles.checkmark}>
+            <Text style={styles.checkmarkText}>✓</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+    >
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.appName, { color: theme.primary }]}>
+          {t("appName")}
+        </Text>
+        <Text style={[styles.tagline, { color: theme.text }]}>
+          {t("tagline")}
+        </Text>
+        <Text style={[styles.taglineNative, { color: theme.textSecondary }]}>
+          {t("taglineNative")}
+        </Text>
       </View>
 
-      <View style={styles.footer}>
-        <Button onPress={handleContinue} style={styles.continueButton}>
-          {t("continue")}
-        </Button>
+      {/* Language Selection Title */}
+      <View style={styles.titleContainer}>
+        <Text style={[styles.title, { color: theme.text }]}>
+          {t("selectLanguage")}
+        </Text>
       </View>
-    </ScreenScrollView>
+
+      {/* Language List */}
+      <FlatList
+        data={languages}
+        renderItem={renderLanguageItem}
+        keyExtractor={(item) => item.code}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Voice Guide Toggle */}
+      <View
+        style={[styles.voiceGuideContainer, { backgroundColor: theme.backgroundDefault }]}
+      >
+        <View style={styles.voiceGuideInfo}>
+          <Text style={[styles.voiceGuideLabel, { color: theme.text }]}>
+            {t("voiceGuide")}
+          </Text>
+          <Text
+            style={[styles.voiceGuideSubtext, { color: theme.textSecondary }]}
+          >
+            {t("appWillSpeak")}
+          </Text>
+        </View>
+        <Switch
+          value={voiceGuideEnabled}
+          onValueChange={setVoiceGuideEnabled}
+          trackColor={{ false: theme.border, true: theme.primary }}
+          thumbColor="#FFFFFF"
+        />
+      </View>
+
+      {/* Continue Button */}
+      <TouchableOpacity
+        style={[styles.continueButton, { backgroundColor: theme.primary }]}
+        onPress={handleContinue}
+        accessibilityLabel={t("continue")}
+        accessibilityRole="button"
+      >
+        <Text style={styles.continueButtonText}>{t("continue")}</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "space-between",
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   header: {
     alignItems: "center",
-    marginBottom: Spacing["3xl"],
-    paddingTop: Spacing.xl,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    marginTop: 40,
+    marginBottom: 30,
   },
   appName: {
     fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: 2,
+    fontWeight: "bold",
+    letterSpacing: 3,
   },
   tagline: {
+    fontSize: 16,
+    marginTop: 8,
+  },
+  taglineNative: {
     fontSize: 14,
-    marginTop: Spacing.xs,
+    marginTop: 4,
   },
-  taglineSmall: {
-    fontSize: 12,
-    marginTop: Spacing.xs,
+  titleContainer: {
+    marginBottom: 20,
   },
-  content: {
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  list: {
     flex: 1,
   },
-  sectionTitle: {
-    textAlign: "center",
-    marginBottom: Spacing.sm,
+  listContent: {
+    paddingBottom: 20,
   },
-  subtitle: {
-    textAlign: "center",
-    marginBottom: Spacing["2xl"],
-  },
-  languagesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: Spacing.md,
-  },
-  languageCard: {
-    width: "48%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
+  languageItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    ...Shadows.md,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
   },
-  languageTextContainer: {
+  languageInfo: {
     flex: 1,
   },
-  languageNativeName: {
-    fontSize: 18,
+  languageName: {
+    fontSize: 16,
     fontWeight: "600",
-    marginBottom: Spacing.xs,
   },
-  checkIcon: {
+  nativeName: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  checkmark: {
     width: 24,
     height: 24,
     borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-  footer: {
-    paddingTop: Spacing.xl,
+  checkmarkText: {
+    color: "#4CAF50",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  voiceGuideContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  voiceGuideInfo: {
+    flex: 1,
+  },
+  voiceGuideLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  voiceGuideSubtext: {
+    fontSize: 12,
+    marginTop: 2,
   },
   continueButton: {
-    backgroundColor: NexaVaultColors.primary,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  continueButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

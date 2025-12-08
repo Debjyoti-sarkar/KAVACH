@@ -1,12 +1,11 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TextInput, Pressable, ActivityIndicator } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, TextInput, Pressable, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withRepeat,
-  withSequence,
   withTiming,
 } from "react-native-reanimated";
 
@@ -15,34 +14,40 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import FraudDetectionService, { ScanResult as FraudScanResult } from "@/services/FraudDetectionService";
+import SMSReaderService from "@/services/SMSReaderService";
 
 type ScanResult = "safe" | "suspicious" | "dangerous" | null;
-
-const FRAUD_INDICATORS = [
-  "urgent action required",
-  "click here immediately",
-  "verify your account",
-  "suspended account",
-  "lottery winner",
-  "bank otp",
-  "share otp",
-  "kyc update",
-  "free gift",
-  "claim prize",
-];
 
 export default function FraudScanScreen() {
   const { theme } = useTheme();
   const { t } = useLanguage();
 
   const [message, setMessage] = useState("");
+  const [sender, setSender] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult>(null);
   const [detectedIndicators, setDetectedIndicators] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [confidence, setConfidence] = useState<number>(0);
+  const [statistics, setStatistics] = useState({
+    totalScanned: 0,
+    fraudDetected: 0,
+    suspiciousDetected: 0,
+  });
 
   const scanProgress = useSharedValue(0);
   const resultScale = useSharedValue(0);
+
+  useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    const stats = await FraudDetectionService.getFraudStatistics();
+    setStatistics(stats);
+  };
 
   const scanAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${scanProgress.value * 360}deg` }],
@@ -53,16 +58,58 @@ export default function FraudScanScreen() {
     opacity: resultScale.value,
   }));
 
-  const analyzeMessage = (text: string): { result: ScanResult; indicators: string[] } => {
-    const lowerText = text.toLowerCase();
-    const found = FRAUD_INDICATORS.filter((indicator) => lowerText.includes(indicator));
+  const handleScanSMS = async () => {
+    try {
+      const hasPermission = await SMSReaderService.requestPermissions();
+      
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'SMS reading permission is required to scan messages. Please grant permission in settings.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
-    if (found.length >= 3) {
-      return { result: "dangerous", indicators: found };
-    } else if (found.length >= 1) {
-      return { result: "suspicious", indicators: found };
+      setIsScanning(true);
+      scanProgress.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+
+      const smsMessages = await SMSReaderService.getRecentSMS(50);
+      
+      if (smsMessages.length === 0) {
+        Alert.alert('No Messages', 'No banking-related SMS messages found.');
+        setIsScanning(false);
+        scanProgress.value = 0;
+        return;
+      }
+
+      let fraudCount = 0;
+      let suspiciousCount = 0;
+
+      for (const msg of smsMessages) {
+        const analysis = await FraudDetectionService.analyzeSMS(msg.body, msg.address);
+        await FraudDetectionService.updateStatistics(analysis.category);
+        
+        if (analysis.category === 'fraud') fraudCount++;
+        if (analysis.category === 'suspicious') suspiciousCount++;
+      }
+
+      await loadStatistics();
+      setIsScanning(false);
+      scanProgress.value = 0;
+
+      Alert.alert(
+        'Scan Complete',
+        `Scanned ${smsMessages.length} messages\n🚨 Fraud: ${fraudCount}\n⚠️ Suspicious: ${suspiciousCount}\n✅ Safe: ${smsMessages.length - fraudCount - suspiciousCount}`,
+        [{ text: 'OK' }]
+      );
+
+    } catch (error) {
+      console.error('SMS scan error:', error);
+      Alert.alert('Error', 'Failed to scan SMS messages. Please try again.');
+      setIsScanning(false);
+      scanProgress.value = 0;
     }
-    return { result: "safe", indicators: [] };
   };
 
   const handleScan = async () => {
@@ -72,26 +119,49 @@ export default function FraudScanScreen() {
     setResult(null);
     resultScale.value = 0;
 
-    scanProgress.value = withRepeat(
-      withTiming(1, { duration: 1000 }),
-      3,
-      false
-    );
+    scanProgress.value = withRepeat(withTiming(1, { duration: 1000 }), 3, false);
 
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
-    const analysis = analyzeMessage(message);
-    setResult(analysis.result);
-    setDetectedIndicators(analysis.indicators);
-    setIsScanning(false);
+    try {
+      const analysis: FraudScanResult = await FraudDetectionService.analyzeSMS(
+        message,
+        sender || 'Manual Entry'
+      );
+      
+      await FraudDetectionService.updateStatistics(analysis.category);
+      await loadStatistics();
 
-    resultScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+      let resultType: ScanResult;
+      if (analysis.category === 'fraud') {
+        resultType = 'dangerous';
+      } else if (analysis.category === 'suspicious') {
+        resultType = 'suspicious';
+      } else {
+        resultType = 'safe';
+      }
+
+      setResult(resultType);
+      setDetectedIndicators(analysis.reasons);
+      setRecommendations(analysis.recommendations);
+      setConfidence(analysis.confidence);
+      setIsScanning(false);
+
+      resultScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    } catch (error) {
+      console.error('Analysis error:', error);
+      Alert.alert('Error', 'Failed to analyze message');
+      setIsScanning(false);
+    }
   };
 
   const handleClear = () => {
     setMessage("");
+    setSender("");
     setResult(null);
     setDetectedIndicators([]);
+    setRecommendations([]);
+    setConfidence(0);
     resultScale.value = 0;
   };
 
@@ -144,8 +214,75 @@ export default function FraudScanScreen() {
           {t("scanForFraud")}
         </ThemedText>
         <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Paste any suspicious message to check for potential fraud
+          Scan SMS or paste suspicious messages to check for fraud
         </ThemedText>
+      </View>
+
+      {/* Statistics Card */}
+      <View style={[styles.statsCard, { backgroundColor: theme.backgroundSecondary }]}>
+        <ThemedText type="small" style={{ fontWeight: "600", marginBottom: Spacing.sm }}>
+          Detection Statistics
+        </ThemedText>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <ThemedText type="h4" style={{ color: NexaVaultColors.primary }}>
+              {statistics.totalScanned}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              Scanned
+            </ThemedText>
+          </View>
+          <View style={styles.statItem}>
+            <ThemedText type="h4" style={{ color: NexaVaultColors.sos }}>
+              {statistics.fraudDetected}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              Fraud
+            </ThemedText>
+          </View>
+          <View style={styles.statItem}>
+            <ThemedText type="h4" style={{ color: NexaVaultColors.warning }}>
+              {statistics.suspiciousDetected}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              Suspicious
+            </ThemedText>
+          </View>
+        </View>
+      </View>
+
+      {/* SMS Scan Button */}
+      <Button
+        onPress={handleScanSMS}
+        disabled={isScanning}
+        style={{ backgroundColor: NexaVaultColors.primary, marginBottom: Spacing.lg }}
+      >
+        <Feather name="mail" size={18} color="#FFFFFF" style={{ marginRight: Spacing.sm }} />
+        {isScanning ? "Scanning SMS..." : "Scan All SMS Messages"}
+      </Button>
+
+      <View style={styles.divider}>
+        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+        <ThemedText type="caption" style={[styles.dividerText, { color: theme.textSecondary }]}>
+          OR MANUAL ENTRY
+        </ThemedText>
+        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+      </View>
+
+      <View style={styles.inputSection}>
+        <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
+          Sender (Optional)
+        </ThemedText>
+        <TextInput
+          style={[
+            styles.senderInput,
+            { backgroundColor: theme.card, color: theme.text, borderColor: theme.border },
+          ]}
+          placeholder="e.g., VM-HDFC or +919876543210"
+          placeholderTextColor={theme.textSecondary}
+          value={sender}
+          onChangeText={setSender}
+        />
       </View>
 
       <View style={styles.inputSection}>
@@ -210,20 +347,39 @@ export default function FraudScanScreen() {
             <ThemedText type="h4" style={{ color: getResultColor(), marginBottom: Spacing.sm }}>
               {result === "safe" ? "Safe" : result === "suspicious" ? "Suspicious" : "Dangerous"}
             </ThemedText>
+            <ThemedText type="small" style={[styles.confidenceBadge, { color: getResultColor() }]}>
+              {confidence.toFixed(0)}% Confidence
+            </ThemedText>
             <ThemedText type="small" style={[styles.resultMessage, { color: theme.text }]}>
               {getResultMessage()}
             </ThemedText>
 
             {detectedIndicators.length > 0 ? (
               <View style={styles.indicatorsContainer}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, fontWeight: "600" }}>
                   Detected indicators:
                 </ThemedText>
                 {detectedIndicators.map((indicator, index) => (
                   <View key={index} style={styles.indicatorTag}>
                     <Feather name="alert-circle" size={12} color={getResultColor()} />
-                    <ThemedText type="caption" style={{ color: getResultColor(), marginLeft: Spacing.xs }}>
+                    <ThemedText type="caption" style={{ color: theme.text, marginLeft: Spacing.sm, flex: 1 }}>
                       {indicator}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            {recommendations.length > 0 ? (
+              <View style={styles.recommendationsContainer}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, fontWeight: "600" }}>
+                  Recommendations:
+                </ThemedText>
+                {recommendations.map((rec, index) => (
+                  <View key={index} style={styles.recommendationTag}>
+                    <Feather name="shield" size={12} color={NexaVaultColors.success} />
+                    <ThemedText type="caption" style={{ color: theme.text, marginLeft: Spacing.sm, flex: 1 }}>
+                      {rec}
                     </ThemedText>
                   </View>
                 ))}
@@ -281,6 +437,32 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: Spacing.lg,
   },
+  statsCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  statItem: {
+    alignItems: "center",
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    paddingHorizontal: Spacing.md,
+    fontSize: 11,
+    fontWeight: "600",
+  },
   inputSection: {
     marginBottom: Spacing.lg,
   },
@@ -288,6 +470,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+    fontSize: 11,
+  },
+  senderInput: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    fontSize: 16,
   },
   messageInput: {
     minHeight: 150,
@@ -330,6 +519,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing.md,
   },
+  confidenceBadge: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: Spacing.sm,
+  },
   resultMessage: {
     textAlign: "center",
   },
@@ -339,8 +533,19 @@ const styles = StyleSheet.create({
   },
   indicatorTag: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.xs,
+    alignItems: "flex-start",
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  recommendationsContainer: {
+    marginTop: Spacing.lg,
+    width: "100%",
+  },
+  recommendationTag: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   tipsCard: {
     padding: Spacing.lg,
