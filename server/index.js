@@ -1,10 +1,13 @@
-// server/index.js - CLEANED, WORKING VERSION WITH GEMINI STT + BEHAVIOR ANALYSIS
+// -------------------------------
+//  NEXAVAULT MASTER BACKEND
+// -------------------------------
+
+import express from "express";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import path from "path";
 import multer from "multer";
-import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { writeFile, unlink } from "fs/promises";
@@ -12,46 +15,69 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import mongoose from "mongoose";
+
+// ROUTERS
 import paymentRouter from "./routes/payment.js";
 import fraudDetectionRouter from "./routes/frauddetection.js";
 import smsFraudRouter from "./routes/smsfraud.js";
 import aadhaarRouter from "./routes/aadhaar.js";
 import ttsRouter from "./tts.js";
+import nexasafeRouter from "./routes/nexasafe-server.js"; // FIXED IMPORT
 
-// Set FFmpeg path
+// --------------------------------------
+// FFmpeg configuration
+// --------------------------------------
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+// --------------------------------------
 // Resolve __dirname for ES modules
+// --------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env
+// --------------------------------------
+// Load .env file
+// --------------------------------------
 dotenv.config({ path: join(__dirname, ".env") });
 
-// Initialize Gemini AI
+// --------------------------------------
+// Google Gemini AI initialization
+// --------------------------------------
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Connect to MongoDB (for behavior analysis)
+// --------------------------------------
+// Connect MongoDB (optional for behavior)
+// --------------------------------------
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/nexavault";
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("✅ Connected to MongoDB for Behavior Analysis"))
-  .catch(err => console.log("⚠️ MongoDB connection optional:", err.message));
 
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log("✅ Connected to MongoDB for Behavior Analysis"))
+  .catch((err) =>
+    console.log("⚠️ MongoDB optional, continuing without DB:", err.message)
+  );
+
+// --------------------------------------
+// Express App Setup
+// --------------------------------------
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
-// ---- TTS ROUTE ----
+// TTS
 app.use("/tts", ttsRouter);
 
-// ---- MULTER CONFIG ----
+// FILE UPLOADS
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 },
 });
 
-// ---- HEALTH CHECK ----
+// --------------------------------------
+// HEALTH CHECK
+// --------------------------------------
 const startTime = Date.now();
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -60,35 +86,41 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ---- PAYMENT ROUTES ----
+// --------------------------------------
+// ROUTES
+// --------------------------------------
+
+// Payment
 app.use("/api/payment", paymentRouter);
 
-// ---- FRAUD DETECTION / BEHAVIOR ANALYSIS ROUTES ----
+// Fraud detection
 app.use("/api/fraud", fraudDetectionRouter);
 
-// ---- SMS FRAUD DETECTION ROUTES ----
+// SMS Fraud
 app.use("/api/sms", smsFraudRouter);
 
-// ---- AADHAAR / DIGILOCKER VERIFICATION ROUTES ----
+// Aadhaar / Digilocker
 app.use("/api/aadhaar", aadhaarRouter);
 
-// ============================================================
-// 🔥 REAL STT USING GOOGLE GEMINI + FFMPEG CONVERSION
-// ============================================================
+// NexaSafe Router (FIXED)
+app.use("/api/nexasafe", nexasafeRouter);
 
+// --------------------------------------
+// GOOGLE GEMINI SPEECH-TO-TEXT
+// --------------------------------------
 app.post("/assistant/transcribe", upload.single("audio"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No audio provided" });
 
     console.log("🎤 Received audio:", req.file.originalname);
 
-    // STEP 1: Save incoming m4a file
+    // Save incoming file
     const inputPath = path.join(__dirname, `rec-${Date.now()}.m4a`);
-    const wavPath = path.join(__dirname, `rec-${Date.now()}.wav`);
+    const wavPath = path.join(__dirname, `rec-${Date.now()}-conv.wav`);
 
     await writeFile(inputPath, req.file.buffer);
 
-    // STEP 2: Convert .m4a → .wav
+    // Convert m4a → wav
     await new Promise((resolve, reject) => {
       ffmpeg(inputPath)
         .output(wavPath)
@@ -100,11 +132,11 @@ app.post("/assistant/transcribe", upload.single("audio"), async (req, res) => {
         .run();
     });
 
-    // STEP 3: Read WAV → Base64
+    // Load wav → Base64
     const wavBuffer = fs.readFileSync(wavPath);
     const wavBase64 = wavBuffer.toString("base64");
 
-    // STEP 4: Send WAV to Gemini
+    // Gemini STT
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const result = await model.generateContent({
@@ -125,31 +157,24 @@ app.post("/assistant/transcribe", upload.single("audio"), async (req, res) => {
     });
 
     const text = result?.response?.text() || "";
-    console.log("🔍 Gemini Raw Response:", result);
-    console.log("📝 Gemini Transcript:", text || "<EMPTY>");
+    console.log("📝 Transcript from Gemini:", text);
 
-    if (!text) {
-      console.log("❗ WARNING: Gemini returned EMPTY text!");
-      console.log("📦 WAV Buffer Size:", wavBuffer.length);
-      console.log("📦 Base64 Length:", wavBase64.length);
-    }
-
-    // Cleanup temp files
     await unlink(inputPath).catch(() => {});
     await unlink(wavPath).catch(() => {});
 
-    return res.json({ text });
-
+    res.json({ text });
   } catch (err) {
-    console.error("❌ STT error:", err);
-    return res.status(500).json({ error: "Transcription error", details: err.message });
+    console.error("❌ STT Error:", err);
+    res.status(500).json({
+      error: "Transcription failed",
+      details: err.message,
+    });
   }
 });
 
-// ============================================================
-// 🔥 RULE-BASED NLU PARSER (FULLY WORKING)
-// ============================================================
-
+// --------------------------------------
+// RULE-BASED NLU PARSER
+// --------------------------------------
 app.post("/assistant/parse", (req, res) => {
   const { text } = req.body;
 
@@ -157,92 +182,53 @@ app.post("/assistant/parse", (req, res) => {
     return res.status(400).json({ error: "Text is required" });
   }
 
-  const lowerText = text.toLowerCase();
+  const lower = text.toLowerCase();
   let intent = "unknown";
   let entities = {};
-  let replyText = "I'm sorry, I didn't understand that.";
+  let replyText = "I didn't understand that.";
   let actionSuggested = "none";
-  let confidence = 0.5;
 
-  if (
-    lowerText.includes("send") ||
-    lowerText.includes("pay") ||
-    lowerText.includes("transfer") ||
-    (lowerText.includes("rupees") || lowerText.includes("rs")) && lowerText.match(/\d+/)
-  ) {
+  // Simple intents
+  if (lower.includes("send") || lower.includes("pay")) {
     intent = "send_money";
     actionSuggested = "prefill_and_navigate_upi";
-    confidence = 0.85;
 
-    const amountMatch = lowerText.match(/(\d+(?:\.\d{2})?)/);
-    if (amountMatch) entities.amount = amountMatch[1];
+    const amountMatch = lower.match(/\d+/);
+    if (amountMatch) entities.amount = amountMatch[0];
 
-    const toMatch = lowerText.match(/to\s+(\w+)/i);
-    if (toMatch) entities.recipient = toMatch[1];
-
-    replyText = `I'll help you send ₹${entities.amount || ""} ${entities.recipient ? "to " + entities.recipient : ""}.`;
+    replyText = `Okay, sending ₹${entities.amount || ""}.`;
   }
-  else if (lowerText.includes("balance")) {
+
+  if (lower.includes("balance")) {
     intent = "check_balance";
-    replyText = "Let me show your balance.";
     actionSuggested = "ask_pin_for_balance";
+    replyText = "Let me fetch your balance.";
   }
-  else if (lowerText.includes("history")) {
+
+  if (lower.includes("history")) {
     intent = "view_history";
-    replyText = "Showing your transaction history.";
     actionSuggested = "show_history";
-  }
-  else if (lowerText.includes("qr")) {
-    intent = "scan_qr";
-    replyText = "Opening the QR scanner.";
-    actionSuggested = "scan_qr";
-  }
-  else if (lowerText.includes("fraud")) {
-    intent = "check_fraud";
-    replyText = "Checking for fraud.";
-    actionSuggested = "check_fraud";
-  }
-  else if (lowerText.includes("help") || lowerText.includes("settings")) {
-    intent = "help";
-    replyText = "Opening help and settings.";
-    actionSuggested = "help_support_page";
-  }
-  else if (lowerText.includes("hello") || lowerText.includes("hi")) {
-    intent = "greeting";
-    replyText = "Hello! How can I help you today?";
+    replyText = "Showing your transaction history.";
   }
 
-  res.json({ intent, entities, confidence, replyText, actionSuggested });
-});
-
-// ---- DEBUG ROUTES ----
-app.get("/ping", (req, res) => res.json({ ok: true }));
-
-app.get("/debug/config", (req, res) => {
   res.json({
-    port: process.env.PORT || 3001,
+    intent,
+    entities,
+    replyText,
+    actionSuggested,
   });
 });
 
-// ---- START SERVER ----
+// --------------------------------------
+// START SERVER
+// --------------------------------------
 const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`\n============================================`);
+  console.log(`✅ NexaVault Backend Running on port ${PORT}`);
   console.log(`📍 Health: http://localhost:${PORT}/health`);
-  console.log(`🎤 Transcribe: POST /assistant/transcribe`);
-  console.log(`🧠 Parse: POST /assistant/parse`);
-  console.log(`🔒 Fraud Detection: /api/fraud/*`);
-  console.log(`   - POST /api/fraud/analyze-transaction`);
-  console.log(`   - POST /api/fraud/track-event`);
-  console.log(`   - POST /api/fraud/check-reauth`);
-  console.log(`📱 SMS Fraud Detection: /api/sms/*`);
-  console.log(`   - POST /api/sms/analyze`);
-  console.log(`   - GET /api/sms/alerts/:userId`);
-  console.log(`🆔 Aadhaar Verification: /api/aadhaar/*`);
-  console.log(`   - POST /api/aadhaar/digilocker/auth-url`);
-  console.log(`   - POST /api/aadhaar/digilocker/token`);
-  console.log(`   - POST /api/aadhaar/digilocker/fetch`);
-  console.log(`   - POST /api/aadhaar/request-otp`);
-  console.log(`   - POST /api/aadhaar/verify-otp`);
-  console.log(`   - GET /api/aadhaar/status/:userId`);
+  console.log(`🎤 STT: POST /assistant/transcribe`);
+  console.log(`🧠 NLU: POST /assistant/parse`);
+  console.log(`============================================\n`);
 });

@@ -99,6 +99,16 @@ export const translations: Record<Language, Record<string, string>> = {
     goodMorning: "Good Morning",
     goodAfternoon: "Good Afternoon",
     goodEvening: "Good Evening",
+    // UPI Learning Screen
+    upilearnHeader: "Learn about UPI & Safety",
+    categoryBasics: "Basics",
+    categorySafety: "Safety",
+    categoryFraud: "Fraud",
+    categoryUpiChallenge: "UPI Challenge",
+    categoryGovtSchemes: "Govt Schemes",
+    play: "Play",
+    stop: "Stop",
+    noVideosAvailable: "No videos available in this language for this category.",
   },
   hi: {
     appName: "NEXAVAULT",
@@ -184,6 +194,16 @@ export const translations: Record<Language, Record<string, string>> = {
     goodMorning: "शुभ प्रभात",
     goodAfternoon: "शुभ दोपहर",
     goodEvening: "शुभ संध्या",
+    // UPI Learning Screen
+    upilearnHeader: "UPI और सुरक्षा के बारे में जानें",
+    categoryBasics: "बुनियादी",
+    categorySafety: "सुरक्षा",
+    categoryFraud: "धोखाधड़ी",
+    categoryUpiChallenge: "UPI चैलेंज",
+    categoryGovtSchemes: "सरकारी योजनाएं",
+    play: "चलाएं",
+    stop: "रोकें",
+    noVideosAvailable: "इस श्रेणी के लिए इस भाषा में कोई वीडियो उपलब्ध नहीं है।",
   },
   or: {
     appName: "NEXAVAULT",
@@ -269,6 +289,16 @@ export const translations: Record<Language, Record<string, string>> = {
     goodMorning: "ଶୁଭ ସକାଳ",
     goodAfternoon: "ଶୁଭ ଅପରାହ୍ନ",
     goodEvening: "ଶୁଭ ସନ୍ଧ୍ୟା",
+    // UPI Learning Screen
+    upilearnHeader: "UPI ଏବଂ ସୁରକ୍ଷା ବିଷୟରେ ଜାଣନ୍ତୁ",
+    categoryBasics: "ମୌଳିକ",
+    categorySafety: "ସୁରକ୍ଷା",
+    categoryFraud: "ଠକେଇ",
+    categoryUpiChallenge: "UPI ଚ୍ୟାଲେଞ୍ଜ",
+    categoryGovtSchemes: "ସରକାରୀ ଯୋଜନା",
+    play: "ଚଲାନ୍ତୁ",
+    stop: "ବନ୍ଦ କରନ୍ତୁ",
+    noVideosAvailable: "ଏହି ଶ୍ରେଣୀ ପାଇଁ ଏହି ଭାଷାରେ କୌଣସି ଭିଡିଓ ଉପଲବ୍ଧ ନାହିଁ।",
   },
   ta: {
     appName: "NEXAVAULT",
@@ -354,6 +384,16 @@ export const translations: Record<Language, Record<string, string>> = {
     goodMorning: "காலை வணக்கம்",
     goodAfternoon: "மதிய வணக்கம்",
     goodEvening: "மாலை வணக்கம்",
+    // UPI Learning Screen
+    upilearnHeader: "UPI மற்றும் பாதுகாப்பு பற்றி அறியவும்",
+    categoryBasics: "அடிப்படைகள்",
+    categorySafety: "பாதுகாப்பு",
+    categoryFraud: "மோசடி",
+    categoryUpiChallenge: "UPI சவால்",
+    categoryGovtSchemes: "அரசு திட்டங்கள்",
+    play: "இயக்கு",
+    stop: "நிறுத்து",
+    noVideosAvailable: "இந்த வகைக்கு இந்த மொழியில் வீடியோக்கள் எதுவும் இல்லை.",
   },
 };
 

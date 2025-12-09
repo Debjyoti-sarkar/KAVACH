@@ -17,6 +17,7 @@ import {
 import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import { TRANSCRIBE_URL } from "../services/assistant";
+import { useNetwork } from "@/hooks/useNetwork";
 
 export type VoiceRecorderHandle = {
   start: () => Promise<void>;
@@ -28,6 +29,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, any>(
   ({ onTranscribed, primaryColor = "#007AFF" }, ref) => {
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [isSending, setIsSending] = useState(false);
+    const { isConnected, isWeak } = useNetwork();
 
     /** Clean up properly */
     useEffect(() => {
@@ -43,6 +45,15 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, any>(
      * ---------------------------*/
     const start = async () => {
       try {
+        // Check network status before starting
+        if (!isConnected || isWeak) {
+          Alert.alert(
+            "Network Issue",
+            "Voice assistant unavailable due to weak or no internet connection. Please type your request or try again later."
+          );
+          return;
+        }
+
         if (recording) {
           console.log("⚠️ Recorder already active. Stopping previous instance.");
           await recording.stopAndUnloadAsync().catch(() => {});

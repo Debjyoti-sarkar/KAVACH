@@ -343,6 +343,20 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
+
+        {/* UPI Education Section */}
+        <View style={[styles.upiSection, { backgroundColor: theme.backgroundDefault }]}>
+          <ThemedText type="h4" style={[styles.upiTitle, { color: theme.text }]}>
+            UPI & How It Works
+          </ThemedText>
+
+          <Pressable
+            style={[styles.upiButton, { backgroundColor: theme.primary }]}
+            onPress={() => navigation.navigate("UpiLearning")}
+          >
+            <ThemedText style={styles.upiButtonText}>Learn About UPI & Safety</ThemedText>
+          </Pressable>
+        </View>
       </View>
       </ScrollView>
     </View>
@@ -553,5 +567,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: Spacing.md,
+  },
+  upiSection: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginTop: Spacing.lg,
+    ...Shadows.sm,
+  },
+  upiTitle: {
+    marginBottom: Spacing.md,
+    fontWeight: "600",
+  },
+  upiButton: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+  },
+  upiButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

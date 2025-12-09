@@ -3,6 +3,8 @@ import { View, StyleSheet, TextInput, Pressable, Alert, ActivityIndicator, Gestu
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
+import { useNetwork } from "@/hooks/useNetwork";
+import { enqueue } from "@/services/QueueManager";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -91,6 +93,7 @@ export default function SendMoneyScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "SendMoney">>();
   const { t } = useLanguage();
+  const { isConnected, isWeak } = useNetwork();
 
   // NexaSafe integration for fraud detection
   const {
@@ -197,6 +200,14 @@ export default function SendMoneyScreen() {
   };
 
   const handleConfirmPayment = async () => {
+    const amountValue = parseFloat(amount);
+    const payload = { 
+      amount: amountValue, 
+      recipient, 
+      note: note || "from-app",
+      contactName 
+    };
+
     try {
       setIsProcessing(true);
 
@@ -225,9 +236,28 @@ export default function SendMoneyScreen() {
         }
       }
 
-      // Create payment order
+      // Check network status - if offline or weak, enqueue the transaction
+      if (!isConnected || isWeak) {
+        const entry = await enqueue({
+          type: "send_money",
+          payload,
+          idempotencyKey: "send-" + Date.now(),
+        });
+
+        // NexaSafe: Mark transaction end
+        trackTransactionEnd();
+
+        Alert.alert(
+          "Transaction Saved",
+          "No internet connection. Transaction saved and will be processed automatically when you're back online.",
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+        return;
+      }
+
+      // Create payment order if online
       const paymentOrder = await createPaymentOrder(
-        parseFloat(amount),
+        amountValue,
         recipient,
         note || undefined
       );
@@ -241,11 +271,25 @@ export default function SendMoneyScreen() {
       // NexaSafe: Mark transaction end on error too
       trackTransactionEnd();
 
-      Alert.alert(
-        "Error",
-        "Failed to initiate payment. Please try again.",
-        [{ text: "OK" }]
-      );
+      // On error, optionally enqueue for retry
+      if (isConnected && !isWeak) {
+        await enqueue({
+          type: "send_money",
+          payload,
+          idempotencyKey: "send-" + Date.now(),
+        });
+        Alert.alert(
+          "Transaction Saved",
+          "Could not process now. Transaction saved and will be retried automatically.",
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Failed to initiate payment. Please try again.",
+          [{ text: "OK" }]
+        );
+      }
     } finally {
       setIsProcessing(false);
       setIsAuthenticating(false);

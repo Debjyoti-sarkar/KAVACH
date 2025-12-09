@@ -36,6 +36,7 @@ import SecurityDashboardScreen from "@/screens/SecurityDashboardScreen";
 import BehaviorAnalyticsDashboard from "@/screens/BehaviorAnalyticsDashboard";
 import FraudAlertScreen from "@/screens/FraudAlertScreen";
 import SMSFraudDashboard from "@/screens/SMSFraudDashboard";
+import UpiLearningScreen from "@/screens/UpiLearningScreen";
 import { PaymentOrder } from "@/services/paymentGateway";
 import { FraudAnalysis } from "@/services/RealTimeSMSMonitor";
 
@@ -75,6 +76,7 @@ export type RootStackParamList = {
     analysis?: FraudAnalysis;
   } | undefined;
   SMSFraudDashboard: undefined;
+  UpiLearning: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -312,6 +314,12 @@ export default function RootNavigator() {
         name="SMSFraudDashboard"
         component={SMSFraudDashboard}
         options={{ headerTitle: "SMS Protection" }}
+      />
+
+      <Stack.Screen
+        name="UpiLearning"
+        component={UpiLearningScreen}
+        options={{ headerTitle: "UPI Learning" }}
       />
     </Stack.Navigator>
   );

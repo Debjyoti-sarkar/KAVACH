@@ -481,4 +481,57 @@ router.post('/process-upi', async (req, res) => {
   }
 });
 
+// ============================================================
+// 🔥 NEW: Simple /api/payment/send endpoint for offline queue
+// ============================================================
+
+// Temporary in-memory idempotency store
+// (Replace with Redis / DB later)
+const idempotencyStore = new Map();
+
+/**
+ * POST /api/payment/send
+ * Simple payment endpoint for queued transactions
+ * Supports idempotency to prevent duplicate payments
+ */
+router.post("/send", async (req, res) => {
+  try {
+    const { amount, recipient, note, contactName } = req.body;
+    const idempotencyKey = req.header("Idempotency-Key") || crypto.randomUUID();
+
+    if (!amount || !recipient) {
+      return res.status(400).json({ error: "Missing amount or recipient" });
+    }
+
+    // ---- Check idempotency ----
+    if (idempotencyStore.has(idempotencyKey)) {
+      console.log("⚠️ Duplicate send prevented:", idempotencyKey);
+      return res.json(idempotencyStore.get(idempotencyKey));
+    }
+
+    // ---- Simulate payment success ----
+    const response = {
+      ok: true,
+      txId: "tx-" + Date.now(),
+      amount,
+      recipient,
+      contactName: contactName || "",
+      note: note || "",
+      status: "success",
+      timestamp: new Date().toISOString()
+    };
+
+    // Save result for idempotency
+    idempotencyStore.set(idempotencyKey, response);
+
+    console.log("💸 Payment processed:", response);
+
+    return res.json(response);
+
+  } catch (err) {
+    console.error("❌ /api/payment/send error:", err);
+    return res.status(500).json({ error: "Payment failed" });
+  }
+});
+
 export default router;
