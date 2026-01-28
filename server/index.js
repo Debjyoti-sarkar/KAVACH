@@ -9,11 +9,7 @@ import { dirname, join } from "path";
 import path from "path";
 import multer from "multer";
 import cors from "cors";
-import fs from "fs";
-import { writeFile, unlink } from "fs/promises";
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegPath from "ffmpeg-static";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from "@deepgram/sdk";
 import mongoose from "mongoose";
 
 // ROUTERS
@@ -23,11 +19,6 @@ import smsFraudRouter from "./routes/smsfraud.js";
 import aadhaarRouter from "./routes/aadhaar.js";
 import ttsRouter from "./tts.js";
 import nexasafeRouter from "./routes/nexasafe-server.js"; // FIXED IMPORT
-
-// --------------------------------------
-// FFmpeg configuration
-// --------------------------------------
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 // --------------------------------------
 // Resolve __dirname for ES modules
@@ -41,9 +32,9 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, ".env") });
 
 // --------------------------------------
-// Google Gemini AI initialization
+// Deepgram STT initialization (FREE TIER)
 // --------------------------------------
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY || "");
 
 // --------------------------------------
 // Connect MongoDB (optional for behavior)
@@ -106,7 +97,7 @@ app.use("/api/aadhaar", aadhaarRouter);
 app.use("/api/nexasafe", nexasafeRouter);
 
 // --------------------------------------
-// GOOGLE GEMINI SPEECH-TO-TEXT
+// DEEPGRAM SPEECH-TO-TEXT (FREE TIER)
 // --------------------------------------
 app.post("/assistant/transcribe", upload.single("audio"), async (req, res) => {
   try {
@@ -114,60 +105,30 @@ app.post("/assistant/transcribe", upload.single("audio"), async (req, res) => {
 
     console.log("🎤 Received audio:", req.file.originalname);
 
-    // Save incoming file
-    const inputPath = path.join(__dirname, `rec-${Date.now()}.m4a`);
-    const wavPath = path.join(__dirname, `rec-${Date.now()}-conv.wav`);
+    // Use Deepgram for transcription
+    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+      req.file.buffer,
+      {
+        model: "nova-2",
+        language: "en",
+        smart_format: true,
+      }
+    );
 
-    await writeFile(inputPath, req.file.buffer);
+    if (error) throw error;
 
-    // Convert m4a → wav
-    await new Promise((resolve, reject) => {
-      ffmpeg(inputPath)
-        .output(wavPath)
-        .audioChannels(1)
-        .audioFrequency(16000)
-        .format("wav")
-        .on("end", resolve)
-        .on("error", reject)
-        .run();
-    });
-
-    // Load wav → Base64
-    const wavBuffer = fs.readFileSync(wavPath);
-    const wavBase64 = wavBuffer.toString("base64");
-
-    // Gemini STT
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                data: wavBase64,
-                mimeType: "audio/wav",
-              },
-            },
-            { text: "Transcribe this audio clearly." },
-          ],
-        },
-      ],
-    });
-
-    const text = result?.response?.text() || "";
-    console.log("📝 Transcript from Gemini:", text);
-
-    await unlink(inputPath).catch(() => {});
-    await unlink(wavPath).catch(() => {});
+    const text = result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "";
+    console.log("📝 Transcript from Deepgram:", text);
 
     res.json({ text });
   } catch (err) {
     console.error("❌ STT Error:", err);
-    res.status(500).json({
-      error: "Transcription failed",
-      details: err.message,
+
+    // Graceful fallback
+    res.status(200).json({
+      text: "",
+      error: "stt_failed",
+      details: err?.message || String(err),
     });
   }
 });
@@ -189,14 +150,38 @@ app.post("/assistant/parse", (req, res) => {
   let actionSuggested = "none";
 
   // Simple intents
-  if (lower.includes("send") || lower.includes("pay")) {
+  if (lower.includes("send") || lower.includes("pay") || lower.includes("transfer")) {
     intent = "send_money";
     actionSuggested = "prefill_and_navigate_upi";
 
+    // Extract amount
     const amountMatch = lower.match(/\d+/);
     if (amountMatch) entities.amount = amountMatch[0];
 
-    replyText = `Okay, sending ₹${entities.amount || ""}.`;
+    // Extract recipient name (after "to", "for", or before "@")
+    // Patterns: "send 500 to rahul", "pay rahul 200", "transfer to priya"
+    let recipientMatch = lower.match(/(?:to|for)\s+([a-z]+(?:\s+[a-z]+)?)/i);
+    if (recipientMatch) {
+      entities.recipient = recipientMatch[1].trim();
+    } else {
+      // Try pattern: "send rahul 500" or "pay rahul"
+      recipientMatch = lower.match(/(?:send|pay|transfer)\s+([a-z]+)/i);
+      if (recipientMatch && !recipientMatch[1].match(/\d+/)) {
+        entities.recipient = recipientMatch[1].trim();
+      }
+    }
+
+    // Extract UPI ID if present
+    const upiMatch = lower.match(/([a-z0-9]+@[a-z]+)/i);
+    if (upiMatch) {
+      entities.recipient = upiMatch[1];
+    }
+
+    console.log("💰 Extracted entities:", entities);
+
+    replyText = entities.recipient 
+      ? `Okay, sending ₹${entities.amount || "..."} to ${entities.recipient}.`
+      : `Okay, sending ₹${entities.amount || ""}.`;
   }
 
   if (lower.includes("balance")) {

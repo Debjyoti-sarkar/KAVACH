@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import simService from "../services/SIMService";
+import { wipeAllAppData } from "../utils/secureManager";
 
 export type AuthStep =
   | "language_selection"
@@ -38,6 +40,11 @@ interface AuthContextType {
   requireReauth: () => void;
   completeReauth: () => void;
 
+  // SIM security
+  registerSIM: () => Promise<{ success: boolean; error?: string }>;
+  verifySIMAndWipeIfChanged: () => Promise<boolean>;
+  simChangeDetected: boolean;
+
   // OLD dashboard features (kept for compatibility)
   voiceGuideEnabled: boolean;
   toggleVoiceGuide: () => void;
@@ -59,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // security
   const [needsReauth, setNeedsReauth] = useState(false);
+  const [simChangeDetected, setSimChangeDetected] = useState(false);
 
   // dashboard old features
   const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(true);
@@ -186,6 +194,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setOnlineStatus = (v: boolean) => setIsOnline(v);
 
+  // SIM security functions
+  const registerSIM = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await simService.registerSIM();
+      if (result.success) {
+        console.log("✅ SIM registered successfully during onboarding");
+      }
+      return result;
+    } catch (error) {
+      console.error("❌ Error registering SIM:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to register SIM",
+      };
+    }
+  };
+
+  const verifySIMAndWipeIfChanged = async (): Promise<boolean> => {
+    try {
+      const result = await simService.verifySIM();
+
+      if (result.changed) {
+        console.log("🚨 SIM CHANGE DETECTED - Wiping all data...");
+        setSimChangeDetected(true);
+
+        // Wipe all app data
+        const wipeResult = await wipeAllAppData();
+
+        if (wipeResult.success) {
+          console.log("✅ Data wiped successfully after SIM change");
+
+          // Reset auth state to force re-registration
+          setUserData(null);
+          setAuthStepState("language_selection");
+          setHasCompletedOnboarding(false);
+          setNeedsReauth(false);
+        }
+
+        return false; // SIM changed
+      }
+
+      return true; // SIM is valid
+    } catch (error) {
+      console.error("❌ Error verifying SIM:", error);
+      return true; // Don't block on errors
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -207,6 +263,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         needsReauth,
         requireReauth,
         completeReauth,
+
+        // SIM security
+        registerSIM,
+        verifySIMAndWipeIfChanged,
+        simChangeDetected,
 
         voiceGuideEnabled,
         toggleVoiceGuide,

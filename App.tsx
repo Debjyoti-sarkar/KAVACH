@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import { StyleSheet, View, ActivityIndicator, AppState } from "react-native";
+import React, { useEffect, useRef, useCallback, useState } from "react";
+import { StyleSheet, View, ActivityIndicator, AppState, Alert } from "react-native";
 import { NavigationContainer, NavigationState } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -15,6 +15,9 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NexaSafeProvider, useNexaSafe } from "@/contexts/NexaSafeContext";
 import { useTheme } from "@/hooks/useTheme";
 import { NexaVaultColors } from "@/constants/theme";
+import simService from "@/services/SIMService";
+import { wipeAllAppData, isSIMRegistered } from "@/utils/secureManager";
+import { useSIMMonitor } from "@/hooks/useSIMMonitor";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -45,6 +48,26 @@ function AppContent() {
 
   // Track previous route for NexaSafe screen tracking
   const routeNameRef = useRef<string | undefined>(undefined);
+
+  // 🔒 SIM SECURITY: Stable callbacks for SIM monitor
+  const handleSIMChangeCallback = useCallback(() => {
+    console.log("🚨 SIM Change callback triggered - forcing logout");
+    logout();
+  }, [logout]);
+
+  const handleDataWipedCallback = useCallback(() => {
+    console.log("✅ Data wiped callback triggered - app reset to initial state");
+    // Force app to restart from language selection
+    // The wipeAllAppData already clears all storage, so on next load
+    // the app will show language selection screen
+  }, []);
+
+  // 🔒 SIM SECURITY: Monitor SIM changes and wipe data if SIM swapped
+  const { simValid, isChecking: isCheckingSIM } = useSIMMonitor({
+    enabled: hasCompletedOnboarding, // Only monitor after onboarding complete
+    onSIMChange: handleSIMChangeCallback,
+    onDataWiped: handleDataWipedCallback,
+  });
 
   // Handle navigation state changes for NexaSafe tracking
   const handleNavigationStateChange = useCallback((state: NavigationState | undefined) => {
@@ -111,7 +134,7 @@ function AppContent() {
     return () => sub.remove();
   }, [requireReauth]);
 
-  if (isLoading) {
+  if (isLoading || isCheckingSIM) {
     return (
       <View
         style={[

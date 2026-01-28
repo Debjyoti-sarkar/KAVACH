@@ -1,16 +1,81 @@
 // Your backend is running on PORT 3001 (NOT 3000)
-export const BASE_URL = "http://192.168.0.180:3001";
+export const BASE_URL = "https://curvy-sides-carry.loca.lt";
 
 export const TRANSCRIBE_URL = BASE_URL + "/assistant/transcribe";
 export const PARSE_URL = BASE_URL + "/assistant/parse";
+export const HEALTH_URL = BASE_URL + "/health";
 
 // Types for API responses
 export interface ParseResponse {
   intent: string;
   entities: Record<string, any>;
   confidence: number;
+  detectedLanguage?: string;
   replyText: string;
+  replyTextEnglish?: string;
   actionSuggested: string;
+}
+
+// Language code to TTS language mapping (All 22 Indian Languages + English)
+export const LANGUAGE_TTS_MAP: Record<string, string> = {
+  // English
+  'en': 'en-IN',
+  'en-US': 'en-US',
+
+  // Hindi & Hinglish
+  'hi': 'hi-IN',
+  'hi-en': 'hi-IN',
+
+  // Major Indian Languages (with TTS support)
+  'bn': 'bn-IN',    // Bengali (বাংলা)
+  'ta': 'ta-IN',    // Tamil (தமிழ்)
+  'te': 'te-IN',    // Telugu (తెలుగు)
+  'mr': 'mr-IN',    // Marathi (मराठी)
+  'gu': 'gu-IN',    // Gujarati (ગુજરાતી)
+  'kn': 'kn-IN',    // Kannada (ಕನ್ನಡ)
+  'ml': 'ml-IN',    // Malayalam (മലയാളം)
+  'pa': 'pa-IN',    // Punjabi (ਪੰਜਾਬੀ)
+  'ur': 'ur-IN',    // Urdu (اردو)
+  'or': 'or-IN',    // Odia (ଓଡ଼ିଆ)
+
+  // Languages that may fallback to Hindi TTS (similar script/phonetics)
+  'as': 'bn-IN',    // Assamese (অসমীয়া) - similar to Bengali
+  'mai': 'hi-IN',   // Maithili (मैथिली) - Devanagari script
+  'ne': 'hi-IN',    // Nepali (नेपाली) - Devanagari script
+  'kok': 'hi-IN',   // Konkani (कोंकणी) - Devanagari script
+  'doi': 'hi-IN',   // Dogri (डोगरी) - Devanagari script
+  'sa': 'hi-IN',    // Sanskrit (संस्कृतम्) - Devanagari script
+  'brx': 'hi-IN',   // Bodo (बड़ो) - Devanagari script
+
+  // Languages with limited TTS support (fallback to closest)
+  'ks': 'ur-IN',    // Kashmiri (कॉशुर) - close to Urdu
+  'sd': 'ur-IN',    // Sindhi (سنڌي) - close to Urdu
+  'mni': 'bn-IN',   // Manipuri (মৈতৈলোন্) - Bengali script variant
+  'sat': 'hi-IN',   // Santali (ᱥᱟᱱᱛᱟᱲᱤ) - fallback to Hindi
+
+  // Regional dialects (fallback to parent language)
+  'bho': 'hi-IN',   // Bhojpuri
+  'raj': 'hi-IN',   // Rajasthani
+  'cg': 'hi-IN',    // Chhattisgarhi
+  'hne': 'hi-IN',   // Haryanvi
+  'mag': 'hi-IN',   // Magahi
+
+  // Mixed languages
+  'ta-en': 'ta-IN', // Tanglish
+  'bn-en': 'bn-IN', // Benglish
+  'te-en': 'te-IN', // Telugu-English
+  'ml-en': 'ml-IN', // Malayalam-English
+
+  // Default fallback
+  'unknown': 'en-IN',
+};
+
+/**
+ * Get TTS language code from detected language
+ */
+export function getTTSLanguage(detectedLanguage?: string): string {
+  if (!detectedLanguage) return 'en-IN';
+  return LANGUAGE_TTS_MAP[detectedLanguage] || 'en-IN';
 }
 
 export interface TranscribeResponse {

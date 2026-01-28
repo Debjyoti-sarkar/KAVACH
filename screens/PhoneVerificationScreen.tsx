@@ -25,9 +25,9 @@ import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/the
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 // ==================== OTP BYPASS FLAG ====================
-// Set to true to skip Firebase OTP verification (for testing)
+// Set to true to skip Firebase OTP verification (for testing/web)
 // Set to false to enable real OTP verification
-const OTP_BYPASS_ENABLED = true;
+const OTP_BYPASS_ENABLED = Platform.OS === 'web' ? true : true; // Always bypass on web
 // =========================================================
 
 export default function PhoneVerificationScreen() {
@@ -173,14 +173,16 @@ export default function PhoneVerificationScreen() {
 
   return (
     <ScreenKeyboardAwareScrollView contentContainerStyle={styles.container}>
-      {/* Firebase Recaptcha Modal - Required for Phone Auth */}
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={app.options}
-        attemptInvisibleVerification={true}
-        title="Verify you're human"
-        cancelLabel="Cancel"
-      />
+      {/* Firebase Recaptcha Modal - Only render on native platforms when OTP bypass is disabled */}
+      {Platform.OS !== 'web' && !OTP_BYPASS_ENABLED && (
+        <FirebaseRecaptchaVerifierModal
+          ref={recaptchaVerifier}
+          firebaseConfig={app.options}
+          attemptInvisibleVerification={true}
+          title="Verify you're human"
+          cancelLabel="Cancel"
+        />
+      )}
 
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backButton}>

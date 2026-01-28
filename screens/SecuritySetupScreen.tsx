@@ -18,6 +18,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveSecurePin, saveBiometricFlag, saveAadhaar } from "@/utils/secureManager";
+import simService from "@/services/SIMService";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -29,7 +30,7 @@ export default function SecuritySetupScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
-  const { setupPin, enableBiometric, linkAadhaar, completeOnboarding, userData } = useAuth();
+  const { setupPin, enableBiometric, linkAadhaar, completeOnboarding, userData, registerSIM } = useAuth();
 
   const [step, setStep] = useState<SetupStep>("biometric");
   const [pin, setPin] = useState("");
@@ -126,34 +127,122 @@ export default function SecuritySetupScreen() {
   };
 
   const handlePinSetupComplete = async (finalPin: string) => {
-    await saveSecurePin(finalPin);
-    await setupPin(finalPin); // still update AsyncStorage so app flow doesn't break
+    console.log("✅ PIN setup complete, starting navigation...");
+    try {
+      console.log("💾 Saving PIN...");
+      await saveSecurePin(finalPin);
+      await setupPin(finalPin);
+      console.log("✅ PIN saved");
 
-    setStep("aadhaar");
+      console.log("🔄 Completing onboarding...");
+      await completeOnboarding();
+      console.log("✅ Onboarding completed");
+      
+      console.log("🚀 Navigating to Dashboard...");
+      // Navigate immediately on web, use setTimeout for native
+      if (Platform.OS === 'web') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Dashboard" }],
+        });
+      } else {
+        // Register SIM on native platforms
+        try {
+          await registerSIMDuringSetup();
+        } catch (simError) {
+          console.warn("⚠️ SIM registration failed, continuing anyway:", simError);
+        }
+        
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Dashboard" }],
+          });
+        }, 100);
+      }
+    } catch (error) {
+      console.error("❌ PIN setup error:", error);
+      // Try to navigate anyway
+      console.log("🔄 Attempting navigation despite error...");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Dashboard" }],
+      });
+    }
+  };
+
+  const registerSIMDuringSetup = async () => {
+    try {
+      // Request permission and register SIM
+      const hasPermission = await simService.requestPhoneStatePermission();
+      if (hasPermission) {
+        const result = await registerSIM();
+        if (result.success) {
+          console.log("✅ SIM registered successfully during security setup");
+        } else {
+          console.warn("⚠️ SIM registration failed:", result.error);
+        }
+      } else {
+        console.warn("⚠️ Phone state permission not granted for SIM registration");
+      }
+    } catch (error) {
+      console.error("❌ Error during SIM registration:", error);
+    }
   };
 
   const handleAadhaarLink = async () => {
-    // Try to persist aadhaar locally (if available on userData). If not available,
-    // proceed with the existing linking flow which may return/verify the aadhaar.
-    const aadhaarNumber = (userData as any)?.aadhaarNumber ?? (userData as any)?.aadhaar ?? null;
-    if (aadhaarNumber) {
-      await saveAadhaar(aadhaarNumber);
-    }
+    console.log("🔗 handleAadhaarLink - Starting...");
+    try {
+      // Try to persist aadhaar locally (if available on userData). If not available,
+      // proceed with the existing linking flow which may return/verify the aadhaar.
+      const aadhaarNumber = (userData as any)?.aadhaarNumber ?? (userData as any)?.aadhaar ?? null;
+      if (aadhaarNumber) {
+        await saveAadhaar(aadhaarNumber);
+      }
 
-    await linkAadhaar();
-    await completeOnboarding();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Dashboard" }],
-    });
+      await linkAadhaar();
+
+      // Register SIM before completing onboarding (skip on web)
+      if (Platform.OS !== 'web') {
+        await registerSIMDuringSetup();
+      }
+
+      await completeOnboarding();
+      console.log("✅ Onboarding complete, navigating to Dashboard...");
+      
+      // Use a slight delay to ensure state updates
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Dashboard" }],
+        });
+      }, 100);
+    } catch (error) {
+      console.error("❌ handleAadhaarLink error:", error);
+    }
   };
 
   const handleSkipAadhaar = async () => {
-    await completeOnboarding();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Dashboard" }],
-    });
+    console.log("⏭️ handleSkipAadhaar - Starting...");
+    try {
+      // Register SIM before completing onboarding (skip on web)
+      if (Platform.OS !== 'web') {
+        await registerSIMDuringSetup();
+      }
+
+      await completeOnboarding();
+      console.log("✅ Onboarding complete, navigating to Dashboard...");
+      
+      // Use a slight delay to ensure state updates
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Dashboard" }],
+        });
+      }, 100);
+    } catch (error) {
+      console.error("❌ handleSkipAadhaar error:", error);
+    }
   };
 
   const renderBiometricStep = () => (
@@ -290,7 +379,7 @@ export default function SecuritySetupScreen() {
   return (
     <ScreenKeyboardAwareScrollView>
       <View style={styles.progressContainer}>
-        {["biometric", "pin_create", "aadhaar"].map((s, index) => (
+        {["biometric", "pin_create"].map((s, index) => (
           <View
             key={s}
             style={[
@@ -299,8 +388,7 @@ export default function SecuritySetupScreen() {
                 backgroundColor:
                   step === s || (step === "pin_confirm" && s === "pin_create")
                     ? NexaVaultColors.primary
-                    : (step === "pin_confirm" && index < 1) ||
-                      (step === "aadhaar" && index < 2)
+                    : (step === "pin_confirm" && index < 1)
                     ? NexaVaultColors.primary
                     : theme.border,
               },
@@ -312,7 +400,6 @@ export default function SecuritySetupScreen() {
       {step === "biometric" && renderBiometricStep()}
       {step === "pin_create" && renderPinStep(false)}
       {step === "pin_confirm" && renderPinStep(true)}
-      {step === "aadhaar" && renderAadhaarStep()}
     </ScreenKeyboardAwareScrollView>
   );
 }

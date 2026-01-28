@@ -10,8 +10,8 @@ import { Platform } from 'react-native';
 const USE_MOCK_PAYMENTS = true; // Set to false when payment backend is running
 
 const API_BASE_URL = Platform.select({
-  android: 'http://192.168.0.174:3000/api/payment',
-  ios: 'http://192.168.0.174:3000/api/payment',
+  android: 'http://172.16.20.46:3000/api/payment',
+  ios: 'http://172.16.20.46:3000/api/payment',
   default: 'http://localhost:3000/api/payment'
 });
 

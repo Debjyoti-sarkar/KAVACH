@@ -13,7 +13,7 @@ const videos: VideoItem[] = [
     id: "DYQ8b-dANK0",
     title: "UPI क्या है, इसका उपयोग कैसे करें और धोखाधड़ी से कैसे बचें",
     lang: "hi",
-    source: "UPI Chalega / NPCI"
+    source: "NPCI Official"
   },
 
   // English – full consolidated video
@@ -21,39 +21,39 @@ const videos: VideoItem[] = [
     id: "DYQ8b-dANK0",
     title: "What is UPI & How to Use It Safely | Complete Guide",
     lang: "en",
-    source: "NPCI"
+    source: "NPCI Official"
   },
 
   // Kannada – safety + basics combined awareness video
   {
     id: "RyR_Qd_N2Xw",
-    title: "UPI ఉపయోగಿಸುವ ವಿಧಾನ & ಮೋಸವನ್ನು ತಡೆಯುವುದು",
+    title: "UPI ಉಪಯೋಗಿಸುವ ವಿಧಾನ & ಮೋಸವನ್ನು ತಡೆಯುವುದು",
     lang: "kn",
-    source: "NPCI"
+    source: "NPCI Official"
   },
 
   // Tamil
   {
-    id: "A3onLX1PO5Y",
+    id: "8Qg3CdVeXBg",
     title: "UPI என்ன? பாதுகாப்பாக பயன்படுத்துவது எப்படி?",
     lang: "ta",
-    source: "NPCI"
+    source: "NPCI Official"
   },
 
   // Telugu
   {
-    id: "LPKmKSN0fzM",
+    id: "8Qg3CdVeXBg",
     title: "UPI అంటే ఏమిటి? భద్రంగా ఎలా ఉపయోగించాలి?",
     lang: "te",
-    source: "NPCI"
+    source: "NPCI Official"
   },
 
   // Malayalam
   {
-    id: "uhX-xQehqMw",
+    id: "8Qg3CdVeXBg",
     title: "UPI എന്താണ്? സുരക്ഷിതമായി ഉപയോഗിക്കുന്ന വിധം",
     lang: "ml",
-    source: "NPCI / RBI"
+    source: "NPCI Official"
   }
 ];
 

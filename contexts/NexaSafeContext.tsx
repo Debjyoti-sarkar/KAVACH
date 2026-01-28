@@ -12,8 +12,8 @@ import ReauthModal from '@/components/ReauthModal';
 // Dashboard server URL - using your local network IP for physical device testing
 // For Android emulator use 10.0.2.2, for physical devices use your computer's IP
 const DASHBOARD_URL = Platform.select({
-  android: 'http://192.168.0.174:3001', // Your computer's IP for physical device
-  ios: 'http://192.168.0.174:3001',
+  android: 'https://curvy-sides-carry.loca.lt', // Public backend URL
+  ios: 'https://curvy-sides-carry.loca.lt',
   default: 'http://localhost:3001'
 });
 

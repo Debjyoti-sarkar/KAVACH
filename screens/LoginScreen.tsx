@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -24,6 +24,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { verifySecurePin } from "@/utils/secureManager";
+import { useSIMMonitor } from "@/hooks/useSIMMonitor";
 import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -39,6 +40,16 @@ export default function LoginScreen() {
 
   // NexaSafe integration for failed PIN tracking
   const { trackFailedPin, trackFailedAuth, startSession, restoreTrust } = useNexaSafe();
+
+  // 🔒 SIM SECURITY: Check SIM before allowing login
+  const handleSIMChangeOnLogin = useCallback(() => {
+    console.log("🚨 SIM changed detected on login screen - data will be wiped");
+  }, []);
+
+  const { checkSIM, simValid } = useSIMMonitor({
+    enabled: true,
+    onSIMChange: handleSIMChangeOnLogin,
+  });
 
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -74,6 +85,13 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     try {
+      // 🔒 SIM SECURITY: Verify SIM before allowing biometric login
+      const simOk = await checkSIM();
+      if (!simOk) {
+        // SIM changed - data wipe will be triggered by useSIMMonitor
+        return;
+      }
+
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
@@ -120,6 +138,15 @@ export default function LoginScreen() {
   };
 
   const verifyPin = async (enteredPin: string) => {
+    // 🔒 SIM SECURITY: Verify SIM before allowing login
+    const simOk = await checkSIM();
+    if (!simOk) {
+      // SIM changed - data wipe will be triggered by useSIMMonitor
+      // Don't proceed with login
+      setPin("");
+      return;
+    }
+
     // Try secure PIN first
     const ok = await verifySecurePin(enteredPin);
     if (ok) {

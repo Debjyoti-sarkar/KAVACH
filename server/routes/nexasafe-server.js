@@ -39,14 +39,17 @@ const BEHAVIOR_PENALTIES = {};
 
 // --- Router Endpoints (/api/nexasafe/*) ---
 
+// Get current in-memory session snapshot
 router.get("/session", (req, res) => {
   res.json(currentSessionData);
 });
 
+// Get simple in-memory session history
 router.get("/history", (req, res) => {
   res.json(sessionHistory);
 });
 
+// Start a new NexaSafe session
 router.post("/session/start", (req, res) => {
   currentSessionData = {
     trustScore: 100,
@@ -67,6 +70,51 @@ router.post("/session/start", (req, res) => {
       loanTaken: false
     }
   };
+
+  res.json({ success: true });
+});
+
+// End current session and push a snapshot into history
+router.post("/session/end", (req, res) => {
+  if (currentSessionData.sessionActive) {
+    const endedSession = {
+      ...currentSessionData,
+      sessionActive: false,
+      sessionEnd: new Date().toISOString(),
+    };
+
+    sessionHistory.push(endedSession);
+    currentSessionData.sessionActive = false;
+  }
+
+  res.json({ success: true });
+});
+
+// Lightweight sync endpoint used by mobile dashboard sync
+router.post("/sync", (req, res) => {
+  const {
+    trustScore,
+    riskLevel,
+    sessionActive,
+    behaviorLogs,
+    appliedPenalties,
+    screenRecordingDetected,
+    lastSync,
+  } = req.body || {};
+
+  if (typeof trustScore === "number") currentSessionData.trustScore = trustScore;
+  if (typeof riskLevel === "string") currentSessionData.riskLevel = riskLevel;
+  if (typeof sessionActive === "boolean") currentSessionData.sessionActive = sessionActive;
+  if (Array.isArray(behaviorLogs)) currentSessionData.behaviorLogs = behaviorLogs;
+  if (Array.isArray(appliedPenalties)) currentSessionData.appliedPenalties = appliedPenalties;
+  if (typeof screenRecordingDetected === "boolean") {
+    currentSessionData.screenRecordingDetected = screenRecordingDetected;
+  }
+
+  // Optionally record last sync time
+  if (lastSync) {
+    currentSessionData.lastSync = lastSync;
+  }
 
   res.json({ success: true });
 });
