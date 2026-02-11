@@ -21,6 +21,9 @@ import { useSIMMonitor } from "@/hooks/useSIMMonitor";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Initialize i18n for multi-language support
+import "@/services/i18n";
+
 // Helper to get current route name from navigation state
 function getActiveRouteName(state: NavigationState | undefined): string | undefined {
   if (!state) return undefined;

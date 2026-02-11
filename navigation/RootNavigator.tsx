@@ -37,6 +37,13 @@ import BehaviorAnalyticsDashboard from "@/screens/BehaviorAnalyticsDashboard";
 import FraudAlertScreen from "@/screens/FraudAlertScreen";
 import SMSFraudDashboard from "@/screens/SMSFraudDashboard";
 import UpiLearningScreen from "@/screens/UpiLearningScreen";
+import OtpFraudScannerScreen from "@/screens/OtpFraudScannerScreen";
+import LoanDashboardScreen from "@/screens/LoanDashboardScreen";
+import LoanApplicationScreen from "@/screens/LoanApplicationScreen";
+import QrScreen from "@/screens/QrScreen";
+import GenerateQRScreen from "@/screens/GenerateQRScreen";
+import BiometricAuthScreen from "@/screens/BiometricAuthScreen";
+import SpamDetectionScreen from "@/screens/SpamDetectionScreen";
 import { PaymentOrder } from "@/services/paymentGateway";
 import { FraudAnalysis } from "@/services/RealTimeSMSMonitor";
 
@@ -77,6 +84,13 @@ export type RootStackParamList = {
   } | undefined;
   SMSFraudDashboard: undefined;
   UpiLearning: undefined;
+  OtpFraudScanner: undefined;
+  LoanDashboard: undefined;
+  LoanApplication: { loanType?: string } | undefined;
+  QrScan: undefined;
+  GenerateQR: undefined;
+  BiometricAuth: undefined;
+  SpamDetection: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -314,6 +328,53 @@ export default function RootNavigator() {
         name="SMSFraudDashboard"
         component={SMSFraudDashboard}
         options={{ headerTitle: "SMS Protection" }}
+
+      {/* Merged NexaVault Features */}
+      <Stack.Screen
+        name="OtpFraudScanner"
+        component={OtpFraudScannerScreen}
+        options={{ headerTitle: "OTP Fraud Scanner" }}
+      />
+
+      <Stack.Screen
+        name="LoanDashboard"
+        component={LoanDashboardScreen}
+        options={{ headerTitle: "Loans" }}
+      />
+
+      <Stack.Screen
+        name="LoanApplication"
+        component={LoanApplicationScreen}
+        options={{ headerTitle: "Apply for Loan" }}
+      />
+
+      <Stack.Screen
+        name="QrScan"
+        component={QrScreen}
+        options={{
+          headerTitle: "Scan QR Code",
+          presentation: "fullScreenModal",
+          headerTransparent: true,
+        }}
+      />
+
+      <Stack.Screen
+        name="GenerateQR"
+        component={GenerateQRScreen}
+        options={{ headerTitle: "Generate QR Code" }}
+      />
+
+      <Stack.Screen
+        name="BiometricAuth"
+        component={BiometricAuthScreen}
+        options={{ headerTitle: "Biometric Setup" }}
+      />
+
+      <Stack.Screen
+        name="SpamDetection"
+        component={SpamDetectionScreen}
+        options={{ headerTitle: "Spam Detection" }}
+      />
       />
 
       <Stack.Screen
