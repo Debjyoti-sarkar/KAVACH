@@ -13,7 +13,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNexaSafe } from "@/contexts/NexaSafeContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { useScreenSecurity } from "@/hooks/useScreenSecurity";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -46,8 +46,8 @@ function AccountCard({ bankName, accountNumber, balance, isLinked, onPress }: Ac
       style={[styles.accountCard, { backgroundColor: theme.card }, Shadows.md, animatedStyle]}
     >
       <View style={styles.accountHeader}>
-        <View style={[styles.bankIcon, { backgroundColor: NexaVaultColors.primary + "20" }]}>
-          <Feather name="credit-card" size={24} color={NexaVaultColors.primary} />
+        <View style={[styles.bankIcon, { backgroundColor: KAVACHColors.primary + "20" }]}>
+          <Feather name="credit-card" size={24} color={KAVACHColors.primary} />
         </View>
         <View style={styles.accountInfo}>
           <ThemedText style={styles.bankName}>{bankName}</ThemedText>
@@ -56,9 +56,9 @@ function AccountCard({ bankName, accountNumber, balance, isLinked, onPress }: Ac
           </ThemedText>
         </View>
         {isLinked ? (
-          <View style={[styles.linkedBadge, { backgroundColor: NexaVaultColors.success + "20" }]}>
-            <Feather name="check" size={12} color={NexaVaultColors.success} />
-            <ThemedText type="caption" style={{ color: NexaVaultColors.success, marginLeft: 4 }}>
+          <View style={[styles.linkedBadge, { backgroundColor: KAVACHColors.success + "20" }]}>
+            <Feather name="check" size={12} color={KAVACHColors.success} />
+            <ThemedText type="caption" style={{ color: KAVACHColors.success, marginLeft: 4 }}>
               Linked
             </ThemedText>
           </View>
@@ -69,7 +69,7 @@ function AccountCard({ bankName, accountNumber, balance, isLinked, onPress }: Ac
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
           Available Balance
         </ThemedText>
-        <ThemedText type="h2" style={{ color: NexaVaultColors.primary }}>
+        <ThemedText type="h2" style={{ color: KAVACHColors.primary }}>
           ₹ {balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
         </ThemedText>
       </View>
@@ -158,11 +158,11 @@ export default function BalanceScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={NexaVaultColors.primary}
+          tintColor={KAVACHColors.primary}
         />
       }
     >
-      <View style={[styles.totalCard, { backgroundColor: NexaVaultColors.primary }]}>
+      <View style={[styles.totalCard, { backgroundColor: KAVACHColors.primary }]}>
         <View style={styles.totalHeader}>
           <ThemedText style={styles.totalLabel}>{t("totalBalance")}</ThemedText>
           <Pressable onPress={() => setShowBalance(!showBalance)}>
@@ -208,8 +208,8 @@ export default function BalanceScreen() {
 
       <View style={[styles.loanCard, { backgroundColor: theme.backgroundSecondary }]}>
         <View style={styles.loanHeader}>
-          <View style={[styles.loanIcon, { backgroundColor: NexaVaultColors.info + "20" }]}>
-            <Feather name="trending-up" size={24} color={NexaVaultColors.info} />
+          <View style={[styles.loanIcon, { backgroundColor: KAVACHColors.info + "20" }]}>
+            <Feather name="trending-up" size={24} color={KAVACHColors.info} />
           </View>
           <View style={styles.loanInfo}>
             <ThemedText type="body" style={{ fontWeight: "600" }}>
@@ -225,7 +225,7 @@ export default function BalanceScreen() {
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               Pre-approved limit
             </ThemedText>
-            <ThemedText type="h4" style={{ color: NexaVaultColors.info }}>
+            <ThemedText type="h4" style={{ color: KAVACHColors.info }}>
               ₹ 50,000
             </ThemedText>
           </View>
@@ -233,13 +233,13 @@ export default function BalanceScreen() {
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               Interest rate from
             </ThemedText>
-            <ThemedText type="h4" style={{ color: NexaVaultColors.success }}>
+            <ThemedText type="h4" style={{ color: KAVACHColors.success }}>
               10.5% p.a.
             </ThemedText>
           </View>
         </View>
-        <Pressable style={[styles.applyButton, { borderColor: NexaVaultColors.info }]}>
-          <ThemedText style={{ color: NexaVaultColors.info, fontWeight: "600" }}>
+        <Pressable style={[styles.applyButton, { borderColor: KAVACHColors.info }]}>
+          <ThemedText style={{ color: KAVACHColors.info, fontWeight: "600" }}>
             Check Eligibility
           </ThemedText>
         </Pressable>
@@ -261,8 +261,8 @@ function QuickActionButton({
 }) {
   return (
     <Pressable onPress={onPress} style={[styles.quickAction, { backgroundColor: theme.card }]}>
-      <View style={[styles.quickActionIcon, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-        <Feather name={icon} size={20} color={NexaVaultColors.primary} />
+      <View style={[styles.quickActionIcon, { backgroundColor: KAVACHColors.primary + "15" }]}>
+        <Feather name={icon} size={20} color={KAVACHColors.primary} />
       </View>
       <ThemedText type="caption" style={{ marginTop: Spacing.xs, textAlign: "center" }}>
         {label}

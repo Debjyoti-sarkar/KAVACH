@@ -9,9 +9,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors } from "@/constants/theme";
 
-const USER_KEY = "@nexavault_user";
+const USER_KEY = "@kavach_user";
 
 export default function ChangePinScreen() {
   const { theme } = useTheme();
@@ -100,8 +100,8 @@ export default function ChangePinScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name="lock" size={32} color={NexaVaultColors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+          <Feather name="lock" size={32} color={KAVACHColors.primary} />
         </View>
         <ThemedText type="h3" style={styles.title}>Change Your PIN</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>

@@ -199,7 +199,7 @@ router.post('/request-otp', async (req, res) => {
         '@entity': 'in.co.sandbox.kyc.aadhaar.okyc.otp.request',
         'aadhaar_number': cleanAadhaar,
         'consent': 'Y',
-        'reason': 'KYC verification for NexaVault banking app',
+        'reason': 'KYC verification for KAVACH banking app',
       }),
     });
 

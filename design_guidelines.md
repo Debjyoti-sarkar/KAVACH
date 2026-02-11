@@ -1,4 +1,4 @@
-# NEXAVAULT Design Guidelines
+# KAVACH Design Guidelines
 
 ## Architecture Decisions
 
@@ -33,7 +33,7 @@
    - Language switcher in top-right corner
 
 ### Navigation
-**Custom Circular Dashboard Navigation** - Based on the NEXAVAULT UI design:
+**Custom Circular Dashboard Navigation** - Based on the KAVACH UI design:
 
 - **Landing Screen**: Main Dashboard with circular menu (no tab bar)
 - **Circular Menu Items** (radial layout around center AI assistant):
@@ -58,7 +58,7 @@
 
 #### 1. Language Selection Screen
 - **Layout**: Full-screen, vertical card stack
-- **Header**: App logo "NEXAVAULT" centered, no navigation buttons
+- **Header**: App logo "KAVACH" centered, no navigation buttons
 - **Content**: 
   - Title: "Select Your Language / अपनी भाषा चुनें"
   - 4+ language cards with flag icons and native text
@@ -91,7 +91,7 @@
 - **Layout**: Fixed, non-scrollable circular menu design
 - **Header**: Custom transparent header
   - Left: SOS Fraud Button (red, 40x40 circular)
-  - Center: "NEXAVAULT" wordmark
+  - Center: "KAVACH" wordmark
   - Right: Voice Guide toggle icon, Network status dot
 - **Content**:
   - **Center**: AI Voice Assistant circle (60% screen width)
@@ -140,7 +140,7 @@
 
 ## Design System
 
-### Color Palette (from NEXAVAULT UI)
+### Color Palette (from KAVACH UI)
 **Primary Colors:**
 - Background: `#F5F1E8` (warm beige/cream)
 - Primary Action: `#2C5F4F` (deep teal-green)
@@ -230,7 +230,7 @@
 - **Haptic Feedback**: On payment confirmation, SOS activation, errors
 
 ### Critical Assets
-1. **NEXAVAULT Logo** (SVG)
+1. **KAVACH Logo** (SVG)
    - Horizontal wordmark for header
    - Square icon for loading/splash
 

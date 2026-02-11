@@ -16,7 +16,7 @@ import time
 from behavior_analytics import BehaviorAnalyticsEngine, analyze_behavior, update_user_baseline
 
 app = FastAPI(
-    title="NexaVault Behavior Analytics API",
+    title="KAVACH Behavior Analytics API",
     description="Real-time behavioral biometric analysis for fraud detection",
     version="1.0.0"
 )
@@ -76,7 +76,7 @@ class HealthResponse(BaseModel):
 @app.get("/", tags=["Root"])
 async def root():
     return {
-        "name": "NexaVault Behavior Analytics API",
+        "name": "KAVACH Behavior Analytics API",
         "version": "1.0.0",
         "endpoints": {
             "analyze": "POST /analyze - Analyze behavior data",
@@ -305,7 +305,7 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn
     print("=" * 50)
-    print("NexaVault Behavior Analytics API")
+    print("KAVACH Behavior Analytics API")
     print("=" * 50)
     print("\nStarting server on http://localhost:5000")
     print("\nEndpoints:")

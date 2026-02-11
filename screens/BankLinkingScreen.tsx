@@ -18,7 +18,7 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const MOCK_BANKS = [
@@ -85,14 +85,14 @@ export default function BankLinkingScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
           {isSearching ? (
             <Animated.View style={scanAnimatedStyle}>
-              <Feather name="loader" size={48} color={NexaVaultColors.primary} />
+              <Feather name="loader" size={48} color={KAVACHColors.primary} />
             </Animated.View>
           ) : (
             <Animated.View style={checkmarkAnimatedStyle}>
-              <Feather name="check-circle" size={48} color={NexaVaultColors.success} />
+              <Feather name="check-circle" size={48} color={KAVACHColors.success} />
             </Animated.View>
           )}
         </View>
@@ -108,7 +108,7 @@ export default function BankLinkingScreen() {
 
       {isSearching ? (
         <View style={styles.searchingContainer}>
-          <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+          <ActivityIndicator size="large" color={KAVACHColors.primary} />
           <ThemedText type="small" style={[styles.searchingText, { color: theme.textSecondary }]}>
             Looking up +91 {userData?.phoneNumber || "XXXXXXXXXX"}
           </ThemedText>
@@ -131,7 +131,7 @@ export default function BankLinkingScreen() {
         <Button
           onPress={handleLinkBank}
           disabled={!selectedBank || isLinking}
-          style={[styles.linkButton, { backgroundColor: NexaVaultColors.primary }]}
+          style={[styles.linkButton, { backgroundColor: KAVACHColors.primary }]}
         >
           {isLinking ? "Linking..." : t("confirmAndLink")}
         </Button>
@@ -185,14 +185,14 @@ function BankCard({
         styles.bankCard,
         {
           backgroundColor: theme.card,
-          borderColor: isSelected ? NexaVaultColors.primary : theme.border,
+          borderColor: isSelected ? KAVACHColors.primary : theme.border,
           borderWidth: isSelected ? 2 : 1,
         },
         animatedStyle,
       ]}
     >
-      <View style={[styles.bankIcon, { backgroundColor: NexaVaultColors.primary + "20" }]}>
-        <Feather name="credit-card" size={24} color={NexaVaultColors.primary} />
+      <View style={[styles.bankIcon, { backgroundColor: KAVACHColors.primary + "20" }]}>
+        <Feather name="credit-card" size={24} color={KAVACHColors.primary} />
       </View>
       <View style={styles.bankInfo}>
         <ThemedText style={styles.bankName}>{bank.name}</ThemedText>
@@ -201,7 +201,7 @@ function BankCard({
         </ThemedText>
       </View>
       {isSelected ? (
-        <View style={[styles.checkIcon, { backgroundColor: NexaVaultColors.primary }]}>
+        <View style={[styles.checkIcon, { backgroundColor: KAVACHColors.primary }]}>
           <Feather name="check" size={16} color="#FFFFFF" />
         </View>
       ) : (

@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Fonts, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, Fonts, KAVACHColors } from "@/constants/theme";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -58,12 +58,12 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.warning + "15" }]}>
-          <Feather name="shield-off" size={48} color={NexaVaultColors.warning} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.warning + "15" }]}>
+          <Feather name="shield-off" size={48} color={KAVACHColors.warning} />
         </View>
 
         <ThemedText type="h2" style={styles.title}>
-          NEXAVAULT needs a restart
+          KAVACH needs a restart
         </ThemedText>
 
         <ThemedText type="body" style={[styles.message, { color: theme.textSecondary }]}>
@@ -75,7 +75,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor: NexaVaultColors.primary,
+              backgroundColor: KAVACHColors.primary,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
@@ -85,7 +85,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             type="body"
             style={[styles.buttonText, { color: theme.buttonText }]}
           >
-            Restart NEXAVAULT
+            Restart KAVACH
           </ThemedText>
         </Pressable>
       </View>

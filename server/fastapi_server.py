@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from gtts import gTTS
 
 app = FastAPI(
-    title="NexaVault Voice Assistant API",
+    title="KAVACH Voice Assistant API",
     description="Backend API for Voice Assistant with STT, NLU, and TTS",
     version="1.0.0"
 )

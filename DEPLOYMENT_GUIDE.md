@@ -1,4 +1,4 @@
-# NexaVault MVP Deployment Guide
+# KAVACH MVP Deployment Guide
 
 ## Quick Deploy (5 minutes)
 
@@ -7,13 +7,13 @@
 #### Option A: localtunnel (Easiest - No signup)
 ```powershell
 # Terminal 1 - Start Backend
-cd d:\NexaVault\NexaVault-App\server
+cd d:\KAVACH\KAVACH-App\server
 node index.js
 
 # Terminal 2 - Expose Backend
-npx localtunnel --port 3001 --subdomain nexavault-backend
+npx localtunnel --port 3001 --subdomain kavach-backend
 ```
-You'll get: `https://nexavault-backend.loca.lt`
+You'll get: `https://kavach-backend.loca.lt`
 
 #### Option B: ngrok (More reliable)
 1. Download: https://ngrok.com/download
@@ -44,7 +44,7 @@ http://172.16.20.46:3001  →  https://your-backend-url.com
 
 #### 3a. Build Web Version
 ```powershell
-cd d:\NexaVault\NexaVault-App
+cd d:\KAVACH\KAVACH-App
 npx expo export:web
 ```
 This creates: `web-build/` folder
@@ -55,7 +55,7 @@ This creates: `web-build/` folder
 npm install -g vercel
 
 # Deploy
-cd d:\NexaVault\NexaVault-App
+cd d:\KAVACH\KAVACH-App
 vercel --prod
 ```
 
@@ -66,7 +66,7 @@ vercel --prod
 4. Import your repo OR drag `web-build` folder
 5. Click "Deploy"
 
-You'll get: `https://nexavault.vercel.app`
+You'll get: `https://kavach.vercel.app`
 
 ---
 
@@ -120,7 +120,7 @@ netlify deploy --prod --dir=web-build
 3. Connect GitHub repo OR:
    ```powershell
    # Push server folder to GitHub
-   cd d:\NexaVault\NexaVault-App\server
+   cd d:\KAVACH\KAVACH-App\server
    git init
    git add .
    git commit -m "Backend"
@@ -131,7 +131,7 @@ netlify deploy --prod --dir=web-build
 7. Add Environment Variables from `.env`
 8. Click "Create Web Service"
 
-You'll get: `https://nexavault-backend.onrender.com`
+You'll get: `https://kavach-backend.onrender.com`
 
 ---
 

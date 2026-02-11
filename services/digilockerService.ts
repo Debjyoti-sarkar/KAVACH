@@ -19,9 +19,9 @@ const API_BASE_URL = BASE_URL.replace(':3000', ':3001'); // Server runs on port 
 
 // Storage keys
 const STORAGE_KEYS = {
-  aadhaarData: '@nexavault_aadhaar_data',
-  verificationStatus: '@nexavault_aadhaar_status',
-  sessionId: '@nexavault_aadhaar_session',
+  aadhaarData: '@kavach_aadhaar_data',
+  verificationStatus: '@kavach_aadhaar_status',
+  sessionId: '@kavach_aadhaar_session',
 };
 // ========================================================
 

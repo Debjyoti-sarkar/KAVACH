@@ -5,7 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors } from "@/constants/theme";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -130,8 +130,8 @@ export default function HelpFaqScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name="help-circle" size={32} color={NexaVaultColors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+          <Feather name="help-circle" size={32} color={KAVACHColors.primary} />
         </View>
         <ThemedText type="h3" style={styles.title}>Help & FAQ</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -152,7 +152,7 @@ export default function HelpFaqScreen() {
               styles.categoryTab,
               { 
                 backgroundColor: selectedCategory === category 
-                  ? NexaVaultColors.primary 
+                  ? KAVACHColors.primary 
                   : theme.card,
                 borderColor: theme.border,
               }
@@ -183,8 +183,8 @@ export default function HelpFaqScreen() {
       </View>
 
       {/* Still need help */}
-      <View style={[styles.helpCard, { backgroundColor: NexaVaultColors.info + "10" }]}>
-        <Feather name="message-circle" size={24} color={NexaVaultColors.info} />
+      <View style={[styles.helpCard, { backgroundColor: KAVACHColors.info + "10" }]}>
+        <Feather name="message-circle" size={24} color={KAVACHColors.info} />
         <View style={styles.helpText}>
           <ThemedText style={{ fontWeight: "500" }}>Still need help?</ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>

@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet, Image } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Spacing, NexaVaultColors } from "@/constants/theme";
+import { Spacing, KAVACHColors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
 interface HeaderTitleProps {
@@ -20,7 +20,7 @@ export function HeaderTitle({ title }: HeaderTitleProps) {
         resizeMode="contain"
       />
       <View style={styles.textContainer}>
-        <ThemedText style={[styles.title, { color: isDark ? theme.text : NexaVaultColors.primary }]}>
+        <ThemedText style={[styles.title, { color: isDark ? theme.text : KAVACHColors.primary }]}>
           {title}
         </ThemedText>
         <ThemedText style={[styles.tagline, { color: theme.textSecondary }]}>

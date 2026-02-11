@@ -9,9 +9,9 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 
-const USER_KEY = "@nexavault_user";
+const USER_KEY = "@kavach_user";
 
 export default function BiometricSettingsScreen() {
   const { theme } = useTheme();
@@ -92,8 +92,8 @@ export default function BiometricSettingsScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name={getIcon()} size={32} color={NexaVaultColors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+          <Feather name={getIcon()} size={32} color={KAVACHColors.primary} />
         </View>
         <ThemedText type="h3" style={styles.title}>{biometricType} Authentication</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -107,7 +107,7 @@ export default function BiometricSettingsScreen() {
         </View>
       ) : !isSupported ? (
         <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <Feather name="alert-circle" size={24} color={NexaVaultColors.warning} />
+          <Feather name="alert-circle" size={24} color={KAVACHColors.warning} />
           <ThemedText style={styles.cardTitle}>Not Available</ThemedText>
           <ThemedText style={[styles.cardText, { color: theme.textSecondary }]}>
             {biometricType} is not set up on this device. Please enable it in your device settings first.
@@ -125,13 +125,13 @@ export default function BiometricSettingsScreen() {
             <Switch
               value={isEnabled}
               onValueChange={toggleBiometric}
-              trackColor={{ false: theme.border, true: NexaVaultColors.primary + "60" }}
-              thumbColor={isEnabled ? NexaVaultColors.primary : theme.backgroundSecondary}
+              trackColor={{ false: theme.border, true: KAVACHColors.primary + "60" }}
+              thumbColor={isEnabled ? KAVACHColors.primary : theme.backgroundSecondary}
             />
           </View>
 
-          <View style={[styles.infoCard, { backgroundColor: NexaVaultColors.info + "15" }]}>
-            <Feather name="info" size={20} color={NexaVaultColors.info} />
+          <View style={[styles.infoCard, { backgroundColor: KAVACHColors.info + "15" }]}>
+            <Feather name="info" size={20} color={KAVACHColors.info} />
             <ThemedText style={[styles.infoText, { color: theme.text }]}>
               Your PIN will still be required as a backup if {biometricType.toLowerCase()} fails.
             </ThemedText>
@@ -141,7 +141,7 @@ export default function BiometricSettingsScreen() {
             <ThemedText type="h4" style={styles.benefitsTitle}>Benefits</ThemedText>
             
             <View style={styles.benefitItem}>
-              <Feather name="zap" size={20} color={NexaVaultColors.primary} />
+              <Feather name="zap" size={20} color={KAVACHColors.primary} />
               <View style={styles.benefitText}>
                 <ThemedText>Faster Login</ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -151,7 +151,7 @@ export default function BiometricSettingsScreen() {
             </View>
 
             <View style={styles.benefitItem}>
-              <Feather name="shield" size={20} color={NexaVaultColors.primary} />
+              <Feather name="shield" size={20} color={KAVACHColors.primary} />
               <View style={styles.benefitText}>
                 <ThemedText>Enhanced Security</ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -161,7 +161,7 @@ export default function BiometricSettingsScreen() {
             </View>
 
             <View style={styles.benefitItem}>
-              <Feather name="lock" size={20} color={NexaVaultColors.primary} />
+              <Feather name="lock" size={20} color={KAVACHColors.primary} />
               <View style={styles.benefitText}>
                 <ThemedText>Secure Storage</ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>

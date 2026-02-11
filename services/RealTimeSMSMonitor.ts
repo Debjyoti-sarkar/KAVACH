@@ -126,11 +126,11 @@ const FRAUD_PATTERNS = {
 
 // Storage keys
 const STORAGE_KEYS = {
-  FRAUD_RECORDS: '@nexavault_fraud_records',
-  DASHBOARD_STATS: '@nexavault_dashboard_stats',
-  BLOCKED_SENDERS: '@nexavault_blocked_senders',
-  TRUSTED_SENDERS: '@nexavault_trusted_senders',
-  SETTINGS: '@nexavault_sms_settings'
+  FRAUD_RECORDS: '@kavach_fraud_records',
+  DASHBOARD_STATS: '@kavach_dashboard_stats',
+  BLOCKED_SENDERS: '@kavach_blocked_senders',
+  TRUSTED_SENDERS: '@kavach_trusted_senders',
+  SETTINGS: '@kavach_sms_settings'
 };
 
 class RealTimeSMSMonitor {
@@ -472,7 +472,7 @@ class RealTimeSMSMonitor {
    */
   private async registerLinkInterceptor(urls: string[]) {
     try {
-      const stored = await AsyncStorage.getItem('@nexavault_blocked_urls');
+      const stored = await AsyncStorage.getItem('@kavach_blocked_urls');
       const blockedUrls: string[] = stored ? JSON.parse(stored) : [];
 
       for (const url of urls) {
@@ -483,7 +483,7 @@ class RealTimeSMSMonitor {
 
       // Keep last 500 blocked URLs
       const trimmed = blockedUrls.slice(-500);
-      await AsyncStorage.setItem('@nexavault_blocked_urls', JSON.stringify(trimmed));
+      await AsyncStorage.setItem('@kavach_blocked_urls', JSON.stringify(trimmed));
 
       console.log('[SMSMonitor] Registered blocked URLs:', urls.length);
     } catch (error) {
@@ -496,7 +496,7 @@ class RealTimeSMSMonitor {
    */
   async isUrlBlocked(url: string): Promise<boolean> {
     try {
-      const stored = await AsyncStorage.getItem('@nexavault_blocked_urls');
+      const stored = await AsyncStorage.getItem('@kavach_blocked_urls');
       if (!stored) return false;
 
       const blockedUrls: string[] = JSON.parse(stored);
@@ -738,7 +738,7 @@ class RealTimeSMSMonitor {
       STORAGE_KEYS.DASHBOARD_STATS,
       STORAGE_KEYS.BLOCKED_SENDERS,
       STORAGE_KEYS.TRUSTED_SENDERS,
-      '@nexavault_blocked_urls'
+      '@kavach_blocked_urls'
     ]);
 
     this.blockedSenders.clear();

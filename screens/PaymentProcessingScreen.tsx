@@ -16,7 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { processUPIPayment, PaymentOrder, PaymentResult } from "@/services/paymentGateway";
 import { useBiometricAnalysis, ComprehensiveAnalysisResult } from "@/hooks/useBiometricAnalysis";
@@ -324,12 +324,12 @@ export default function PaymentProcessingScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Animated.View style={[styles.resultIcon, pulseStyle]}>
             {paymentResult.success ? (
-              <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.success + '20' }]}>
-                <Feather name="check-circle" size={80} color={NexaVaultColors.success} />
+              <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.success + '20' }]}>
+                <Feather name="check-circle" size={80} color={KAVACHColors.success} />
               </View>
             ) : (
-              <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.sos + '20' }]}>
-                <Feather name="x-circle" size={80} color={NexaVaultColors.sos} />
+              <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.sos + '20' }]}>
+                <Feather name="x-circle" size={80} color={KAVACHColors.sos} />
               </View>
             )}
           </Animated.View>
@@ -341,7 +341,7 @@ export default function PaymentProcessingScreen() {
           <View style={[styles.detailsCard, { backgroundColor: theme.card }, Shadows.md]}>
             <View style={styles.detailRow}>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>Amount</ThemedText>
-              <ThemedText type="h3" style={{ color: NexaVaultColors.primary }}>
+              <ThemedText type="h3" style={{ color: KAVACHColors.primary }}>
                 ₹ {paymentResult.amount.toLocaleString('en-IN')}
               </ThemedText>
             </View>
@@ -388,10 +388,10 @@ export default function PaymentProcessingScreen() {
               <ThemedText type="small" style={{ color: theme.textSecondary }}>Status</ThemedText>
               <View style={[
                 styles.statusBadge,
-                { backgroundColor: paymentResult.success ? NexaVaultColors.success + '20' : NexaVaultColors.sos + '20' }
+                { backgroundColor: paymentResult.success ? KAVACHColors.success + '20' : KAVACHColors.sos + '20' }
               ]}>
                 <ThemedText style={{
-                  color: paymentResult.success ? NexaVaultColors.success : NexaVaultColors.sos,
+                  color: paymentResult.success ? KAVACHColors.success : KAVACHColors.sos,
                   fontWeight: '600'
                 }}>
                   {paymentResult.status}
@@ -404,7 +404,7 @@ export default function PaymentProcessingScreen() {
                 <View style={styles.divider} />
                 <View style={styles.detailRow}>
                   <ThemedText type="small" style={{ color: theme.textSecondary }}>Reason</ThemedText>
-                  <ThemedText type="small" style={{ color: NexaVaultColors.sos }}>
+                  <ThemedText type="small" style={{ color: KAVACHColors.sos }}>
                     {paymentResult.failureReason}
                   </ThemedText>
                 </View>
@@ -414,7 +414,7 @@ export default function PaymentProcessingScreen() {
 
           <Button
             onPress={handleDone}
-            style={{ backgroundColor: NexaVaultColors.primary, marginTop: Spacing.xl }}
+            style={{ backgroundColor: KAVACHColors.primary, marginTop: Spacing.xl }}
           >
             {paymentResult.success ? 'Done' : 'Try Again'}
           </Button>
@@ -428,7 +428,7 @@ export default function PaymentProcessingScreen() {
       <ThemedView style={styles.container}>
         <View style={styles.centerContent}>
           <Animated.View style={pulseStyle}>
-            <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+            <ActivityIndicator size="large" color={KAVACHColors.primary} />
           </Animated.View>
           <ThemedText type="h3" style={styles.processingText}>
             Processing Payment...
@@ -469,7 +469,7 @@ export default function PaymentProcessingScreen() {
           startInLoadingState={true}
           renderLoading={() => (
             <View style={styles.webviewLoading}>
-              <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+              <ActivityIndicator size="large" color={KAVACHColors.primary} />
               <ThemedText style={{ marginTop: Spacing.md }}>Loading payment page...</ThemedText>
             </View>
           )}
@@ -493,10 +493,10 @@ export default function PaymentProcessingScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.centerContent}>
-          <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.sos + '20' }]}>
-            <Feather name="shield-off" size={80} color={NexaVaultColors.sos} />
+          <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.sos + '20' }]}>
+            <Feather name="shield-off" size={80} color={KAVACHColors.sos} />
           </View>
-          <ThemedText type="h2" style={[styles.resultTitle, { color: NexaVaultColors.sos }]}>
+          <ThemedText type="h2" style={[styles.resultTitle, { color: KAVACHColors.sos }]}>
             Transaction Blocked
           </ThemedText>
           <ThemedText style={{ textAlign: 'center', color: theme.textSecondary, marginBottom: Spacing.xl }}>
@@ -504,7 +504,7 @@ export default function PaymentProcessingScreen() {
           </ThemedText>
           <Button
             onPress={() => navigation.goBack()}
-            style={{ backgroundColor: NexaVaultColors.sos }}
+            style={{ backgroundColor: KAVACHColors.sos }}
           >
             Go Back
           </Button>
@@ -579,11 +579,11 @@ export default function PaymentProcessingScreen() {
             </View>
           )}
 
-          <View style={[styles.amountCard, { backgroundColor: NexaVaultColors.primary + '15' }]}>
+          <View style={[styles.amountCard, { backgroundColor: KAVACHColors.primary + '15' }]}>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               Amount to Pay
             </ThemedText>
-            <ThemedText type="h1" style={{ color: NexaVaultColors.primary }}>
+            <ThemedText type="h1" style={{ color: KAVACHColors.primary }}>
               ₹{paymentOrder.amount.toFixed(2)}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
@@ -599,10 +599,10 @@ export default function PaymentProcessingScreen() {
           {paymentOrder.paymentUrl && (
             <>
               <Pressable
-                style={[styles.upiAppOption, { backgroundColor: theme.backgroundSecondary, borderColor: NexaVaultColors.primary }]}
+                style={[styles.upiAppOption, { backgroundColor: theme.backgroundSecondary, borderColor: KAVACHColors.primary }]}
                 onPress={openPaymentInBrowser}
               >
-                <View style={[styles.upiAppIcon, { backgroundColor: NexaVaultColors.primary + '20', borderRadius: 12 }]}>
+                <View style={[styles.upiAppIcon, { backgroundColor: KAVACHColors.primary + '20', borderRadius: 12 }]}>
                   <ThemedText style={{ fontSize: 24 }}>💳</ThemedText>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -611,7 +611,7 @@ export default function PaymentProcessingScreen() {
                     Enter UPI PIN to complete payment
                   </ThemedText>
                 </View>
-                <Feather name="external-link" size={20} color={NexaVaultColors.primary} />
+                <Feather name="external-link" size={20} color={KAVACHColors.primary} />
               </Pressable>
               <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: 'center', marginTop: Spacing.sm }}>
                 Complete payment on Cashfree, then close browser
@@ -627,12 +627,12 @@ export default function PaymentProcessingScreen() {
 
           {/* Simulate Success */}
           <Pressable
-            style={[styles.simulatorOption, { backgroundColor: NexaVaultColors.success + '10', borderColor: NexaVaultColors.success }]}
+            style={[styles.simulatorOption, { backgroundColor: KAVACHColors.success + '10', borderColor: KAVACHColors.success }]}
             onPress={() => simulatePayment(true)}
           >
-            <Feather name="check-circle" size={32} color={NexaVaultColors.success} />
+            <Feather name="check-circle" size={32} color={KAVACHColors.success} />
             <View style={styles.simulatorOptionText}>
-              <ThemedText style={[styles.simulatorOptionTitle, { color: NexaVaultColors.success }]}>
+              <ThemedText style={[styles.simulatorOptionTitle, { color: KAVACHColors.success }]}>
                 Simulate Success
               </ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -643,12 +643,12 @@ export default function PaymentProcessingScreen() {
 
           {/* Simulate Failure */}
           <Pressable
-            style={[styles.simulatorOption, { backgroundColor: NexaVaultColors.sos + '10', borderColor: NexaVaultColors.sos }]}
+            style={[styles.simulatorOption, { backgroundColor: KAVACHColors.sos + '10', borderColor: KAVACHColors.sos }]}
             onPress={() => simulatePayment(false)}
           >
-            <Feather name="x-circle" size={32} color={NexaVaultColors.sos} />
+            <Feather name="x-circle" size={32} color={KAVACHColors.sos} />
             <View style={styles.simulatorOptionText}>
-              <ThemedText style={[styles.simulatorOptionTitle, { color: NexaVaultColors.sos }]}>
+              <ThemedText style={[styles.simulatorOptionTitle, { color: KAVACHColors.sos }]}>
                 Simulate Failure
               </ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -672,7 +672,7 @@ export default function PaymentProcessingScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.centerContent}>
-        <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+        <ActivityIndicator size="large" color={KAVACHColors.primary} />
         <ThemedText type="h3" style={styles.processingText}>
           Initializing Payment...
         </ThemedText>

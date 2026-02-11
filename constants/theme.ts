@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 
-export const NexaVaultColors = {
+export const KAVACHColors = {
   background: "#F5F1E8",
   primary: "#2C5F4F",
   secondary: "#7A9B8E",
@@ -23,24 +23,24 @@ export const NexaVaultColors = {
 
 export const Colors = {
   light: {
-    text: NexaVaultColors.textPrimary,
-    textSecondary: NexaVaultColors.textSecondary,
+    text: KAVACHColors.textPrimary,
+    textSecondary: KAVACHColors.textSecondary,
     buttonText: "#FFFFFF",
-    tabIconDefault: NexaVaultColors.textSecondary,
-    tabIconSelected: NexaVaultColors.primary,
-    link: NexaVaultColors.primary,
-    backgroundRoot: NexaVaultColors.background,
-    backgroundDefault: NexaVaultColors.card,
+    tabIconDefault: KAVACHColors.textSecondary,
+    tabIconSelected: KAVACHColors.primary,
+    link: KAVACHColors.primary,
+    backgroundRoot: KAVACHColors.background,
+    backgroundDefault: KAVACHColors.card,
     backgroundSecondary: "#F0ECE3",
     backgroundTertiary: "#E8E4DB",
-    border: NexaVaultColors.border,
-    primary: NexaVaultColors.primary,
-    secondary: NexaVaultColors.secondary,
-    sos: NexaVaultColors.sos,
-    success: NexaVaultColors.success,
-    warning: NexaVaultColors.warning,
-    info: NexaVaultColors.info,
-    card: NexaVaultColors.card,
+    border: KAVACHColors.border,
+    primary: KAVACHColors.primary,
+    secondary: KAVACHColors.secondary,
+    sos: KAVACHColors.sos,
+    success: KAVACHColors.success,
+    warning: KAVACHColors.warning,
+    info: KAVACHColors.info,
+    card: KAVACHColors.card,
   },
   dark: {
     text: "#ECEDEE",

@@ -14,7 +14,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NexaSafeProvider, useNexaSafe } from "@/contexts/NexaSafeContext";
 import { useTheme } from "@/hooks/useTheme";
-import { NexaVaultColors } from "@/constants/theme";
+import { KAVACHColors } from "@/constants/theme";
 import simService from "@/services/SIMService";
 import { wipeAllAppData, isSIMRegistered } from "@/utils/secureManager";
 import { useSIMMonitor } from "@/hooks/useSIMMonitor";
@@ -142,7 +142,7 @@ function AppContent() {
           { backgroundColor: theme.backgroundRoot },
         ]}
       >
-        <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+        <ActivityIndicator size="large" color={KAVACHColors.primary} />
       </View>
     );
   }

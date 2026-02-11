@@ -22,7 +22,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useNexaSafe } from "@/contexts/NexaSafeContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -106,7 +106,7 @@ export default function DashboardScreen() {
         }}
         onPressIn={() => (scale.value = withSpring(0.9))}
         onPressOut={() => (scale.value = withSpring(1))}
-        style={[styles.sosButton, { backgroundColor: NexaVaultColors.sos }, Shadows.md, animatedStyle]}
+        style={[styles.sosButton, { backgroundColor: KAVACHColors.sos }, Shadows.md, animatedStyle]}
       >
         <Feather name="alert-triangle" size={16} color="#FFFFFF" />
         <ThemedText style={styles.sosText}>SOS</ThemedText>
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
     gap: Spacing.xs,
-    backgroundColor: NexaVaultColors.sos,
+    backgroundColor: KAVACHColors.sos,
     ...Shadows.md,
   },
   sosText: {

@@ -21,7 +21,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { app } from "@/utils/firebaseConfig";
 import { sendFirebaseOTP, verifyFirebaseOTP, clearVerification } from "@/utils/firebaseOtpManager";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 // ==================== OTP BYPASS FLAG ====================
@@ -190,8 +190,8 @@ export default function PhoneVerificationScreen() {
         </Pressable>
       </View>
 
-      <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-        <Feather name="smartphone" size={48} color={NexaVaultColors.primary} />
+      <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+        <Feather name="smartphone" size={48} color={KAVACHColors.primary} />
       </View>
 
       <ThemedText type="h2" style={styles.title}>
@@ -205,9 +205,9 @@ export default function PhoneVerificationScreen() {
       </ThemedText>
 
       {/* Real SMS indicator */}
-      <View style={[styles.smsBanner, { backgroundColor: NexaVaultColors.success + "20" }]}>
-        <Feather name="check-circle" size={16} color={NexaVaultColors.success} />
-        <ThemedText type="caption" style={{ color: NexaVaultColors.success, marginLeft: 8 }}>
+      <View style={[styles.smsBanner, { backgroundColor: KAVACHColors.success + "20" }]}>
+        <Feather name="check-circle" size={16} color={KAVACHColors.success} />
+        <ThemedText type="caption" style={{ color: KAVACHColors.success, marginLeft: 8 }}>
           Real SMS OTP will be sent to your phone
         </ThemedText>
       </View>
@@ -233,7 +233,7 @@ export default function PhoneVerificationScreen() {
           <Button
             onPress={handleSendOtp}
             disabled={phone.length !== 10 || loading}
-            style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}
+            style={[styles.button, { backgroundColor: KAVACHColors.primary }]}
           >
             {loading ? <ActivityIndicator color="#FFFFFF" /> : "Send OTP"}
           </Button>
@@ -246,9 +246,9 @@ export default function PhoneVerificationScreen() {
       ) : (
         <View style={styles.inputSection}>
           {/* OTP sent confirmation */}
-          <View style={[styles.otpSentBox, { backgroundColor: NexaVaultColors.primary + "10" }]}>
-            <Feather name="mail" size={20} color={NexaVaultColors.primary} />
-            <ThemedText type="caption" style={{ color: NexaVaultColors.primary, marginLeft: 8 }}>
+          <View style={[styles.otpSentBox, { backgroundColor: KAVACHColors.primary + "10" }]}>
+            <Feather name="mail" size={20} color={KAVACHColors.primary} />
+            <ThemedText type="caption" style={{ color: KAVACHColors.primary, marginLeft: 8 }}>
               Check your SMS inbox for the OTP
             </ThemedText>
           </View>
@@ -261,7 +261,7 @@ export default function PhoneVerificationScreen() {
                   styles.otpBox,
                   {
                     backgroundColor: theme.card,
-                    borderColor: otp.length === index ? NexaVaultColors.primary : theme.border,
+                    borderColor: otp.length === index ? KAVACHColors.primary : theme.border,
                     borderWidth: otp.length === index ? 2 : 1
                   }
                 ]}
@@ -283,7 +283,7 @@ export default function PhoneVerificationScreen() {
           <Button
             onPress={handleVerifyOtp}
             disabled={otp.length !== 6 || loading}
-            style={[styles.button, { backgroundColor: NexaVaultColors.primary }]}
+            style={[styles.button, { backgroundColor: KAVACHColors.primary }]}
           >
             {loading ? <ActivityIndicator color="#FFFFFF" /> : "Verify OTP"}
           </Button>
@@ -296,7 +296,7 @@ export default function PhoneVerificationScreen() {
               <ThemedText
                 type="small"
                 style={{
-                  color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary,
+                  color: resendTimer > 0 ? theme.textSecondary : KAVACHColors.primary,
                   fontWeight: "600",
                   padding: 8
                 }}

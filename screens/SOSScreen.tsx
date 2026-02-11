@@ -18,7 +18,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const EMERGENCY_NUMBERS = [
@@ -97,8 +97,8 @@ export default function SOSScreen() {
         </View>
 
         <View style={styles.successContainer}>
-          <View style={[styles.successIcon, { backgroundColor: NexaVaultColors.success + "20" }]}>
-            <Feather name="check-circle" size={64} color={NexaVaultColors.success} />
+          <View style={[styles.successIcon, { backgroundColor: KAVACHColors.success + "20" }]}>
+            <Feather name="check-circle" size={64} color={KAVACHColors.success} />
           </View>
           <ThemedText type="h2" style={styles.successTitle}>
             Report Submitted
@@ -116,7 +116,7 @@ export default function SOSScreen() {
           </View>
           <Button
             onPress={() => navigation.goBack()}
-            style={{ backgroundColor: NexaVaultColors.primary, width: "100%", marginTop: Spacing.xl }}
+            style={{ backgroundColor: KAVACHColors.primary, width: "100%", marginTop: Spacing.xl }}
           >
             Back to Dashboard
           </Button>
@@ -146,7 +146,7 @@ export default function SOSScreen() {
 
       <View style={styles.content}>
         <Animated.View style={[styles.alertContainer, pulseStyle]}>
-          <View style={[styles.alertIcon, { backgroundColor: NexaVaultColors.sos }]}>
+          <View style={[styles.alertIcon, { backgroundColor: KAVACHColors.sos }]}>
             <Feather name="alert-triangle" size={48} color="#FFFFFF" />
           </View>
         </Animated.View>
@@ -165,16 +165,16 @@ export default function SOSScreen() {
               onPress={() => handleCall(item.number)}
               style={[styles.emergencyCard, { backgroundColor: theme.card }, Shadows.md]}
             >
-              <View style={[styles.emergencyIcon, { backgroundColor: NexaVaultColors.sos + "15" }]}>
-                <Feather name={item.icon} size={24} color={NexaVaultColors.sos} />
+              <View style={[styles.emergencyIcon, { backgroundColor: KAVACHColors.sos + "15" }]}>
+                <Feather name={item.icon} size={24} color={KAVACHColors.sos} />
               </View>
               <View style={styles.emergencyInfo}>
                 <ThemedText style={styles.emergencyName}>{item.name}</ThemedText>
-                <ThemedText type="h4" style={{ color: NexaVaultColors.sos }}>
+                <ThemedText type="h4" style={{ color: KAVACHColors.sos }}>
                   {item.number}
                 </ThemedText>
               </View>
-              <Feather name="phone" size={20} color={NexaVaultColors.sos} />
+              <Feather name="phone" size={20} color={KAVACHColors.sos} />
             </AnimatedPressable>
           ))}
         </View>
@@ -186,14 +186,14 @@ export default function SOSScreen() {
         </ThemedText>
         <Button
           onPress={handleReportFraud}
-          style={{ backgroundColor: NexaVaultColors.sos }}
+          style={{ backgroundColor: KAVACHColors.sos }}
         >
           {t("reportFraud")}
         </Button>
       </View>
 
       <View style={[styles.tipCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <Feather name="info" size={16} color={NexaVaultColors.info} />
+        <Feather name="info" size={16} color={KAVACHColors.info} />
         <ThemedText type="caption" style={{ marginLeft: Spacing.sm, flex: 1, color: theme.textSecondary }}>
           If you've been a victim of financial fraud, block your cards immediately and file a complaint within 24 hours for maximum protection.
         </ThemedText>

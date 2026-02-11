@@ -10,7 +10,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNexaSafe } from "@/contexts/NexaSafeContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 interface SettingsItemProps {
@@ -30,11 +30,11 @@ function SettingsItem({ icon, title, subtitle, onPress, rightElement, danger }: 
       onPress={onPress}
       style={[styles.settingsItem, { backgroundColor: theme.card }]}
     >
-      <View style={[styles.settingsIcon, { backgroundColor: (danger ? NexaVaultColors.sos : NexaVaultColors.primary) + "15" }]}>
-        <Feather name={icon} size={20} color={danger ? NexaVaultColors.sos : NexaVaultColors.primary} />
+      <View style={[styles.settingsIcon, { backgroundColor: (danger ? KAVACHColors.sos : KAVACHColors.primary) + "15" }]}>
+        <Feather name={icon} size={20} color={danger ? KAVACHColors.sos : KAVACHColors.primary} />
       </View>
       <View style={styles.settingsInfo}>
-        <ThemedText style={[styles.settingsTitle, danger && { color: NexaVaultColors.sos }]}>
+        <ThemedText style={[styles.settingsTitle, danger && { color: KAVACHColors.sos }]}>
           {title}
         </ThemedText>
         {subtitle ? (
@@ -124,7 +124,7 @@ export default function SettingsScreen() {
   return (
     <ScreenScrollView>
       <View style={[styles.profileCard, { backgroundColor: theme.card }, Shadows.md]}>
-        <View style={[styles.avatar, { backgroundColor: NexaVaultColors.primary }]}>
+        <View style={[styles.avatar, { backgroundColor: KAVACHColors.primary }]}>
           <ThemedText style={styles.avatarText}>U</ThemedText>
         </View>
         <View style={styles.profileInfo}>
@@ -157,8 +157,8 @@ export default function SettingsScreen() {
               <Switch
                 value={voiceGuideEnabled}
                 onValueChange={toggleVoiceGuide}
-                trackColor={{ false: theme.border, true: NexaVaultColors.primary + "60" }}
-                thumbColor={voiceGuideEnabled ? NexaVaultColors.primary : theme.backgroundSecondary}
+                trackColor={{ false: theme.border, true: KAVACHColors.primary + "60" }}
+                thumbColor={voiceGuideEnabled ? KAVACHColors.primary : theme.backgroundSecondary}
               />
             }
           />
@@ -245,7 +245,7 @@ export default function SettingsScreen() {
 
       <View style={styles.footer}>
         <ThemedText type="caption" style={{ color: theme.textSecondary, textAlign: "center" }}>
-          NEXAVAULT v1.0.0
+          KAVACH v1.0.0
         </ThemedText>
         <ThemedText type="caption" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}>
           Security in your hands

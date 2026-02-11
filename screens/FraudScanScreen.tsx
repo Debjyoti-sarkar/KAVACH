@@ -14,7 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors } from "@/constants/theme";
 import FraudDetectionService, { ScanResult as FraudScanResult } from "@/services/FraudDetectionService";
 import SMSReaderService from "@/services/SMSReaderService";
 
@@ -168,11 +168,11 @@ export default function FraudScanScreen() {
   const getResultColor = () => {
     switch (result) {
       case "safe":
-        return NexaVaultColors.success;
+        return KAVACHColors.success;
       case "suspicious":
-        return NexaVaultColors.warning;
+        return KAVACHColors.warning;
       case "dangerous":
-        return NexaVaultColors.sos;
+        return KAVACHColors.sos;
       default:
         return theme.textSecondary;
     }
@@ -207,8 +207,8 @@ export default function FraudScanScreen() {
   return (
     <ScreenKeyboardAwareScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.success + "15" }]}>
-          <Feather name="shield" size={48} color={NexaVaultColors.success} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.success + "15" }]}>
+          <Feather name="shield" size={48} color={KAVACHColors.success} />
         </View>
         <ThemedText type="h3" style={styles.title}>
           {t("scanForFraud")}
@@ -225,7 +225,7 @@ export default function FraudScanScreen() {
         </ThemedText>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <ThemedText type="h4" style={{ color: NexaVaultColors.primary }}>
+            <ThemedText type="h4" style={{ color: KAVACHColors.primary }}>
               {statistics.totalScanned}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -233,7 +233,7 @@ export default function FraudScanScreen() {
             </ThemedText>
           </View>
           <View style={styles.statItem}>
-            <ThemedText type="h4" style={{ color: NexaVaultColors.sos }}>
+            <ThemedText type="h4" style={{ color: KAVACHColors.sos }}>
               {statistics.fraudDetected}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -241,7 +241,7 @@ export default function FraudScanScreen() {
             </ThemedText>
           </View>
           <View style={styles.statItem}>
-            <ThemedText type="h4" style={{ color: NexaVaultColors.warning }}>
+            <ThemedText type="h4" style={{ color: KAVACHColors.warning }}>
               {statistics.suspiciousDetected}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -255,7 +255,7 @@ export default function FraudScanScreen() {
       <Button
         onPress={handleScanSMS}
         disabled={isScanning}
-        style={{ backgroundColor: NexaVaultColors.primary, marginBottom: Spacing.lg }}
+        style={{ backgroundColor: KAVACHColors.primary, marginBottom: Spacing.lg }}
       >
         <Feather name="mail" size={18} color="#FFFFFF" style={{ marginRight: Spacing.sm }} />
         {isScanning ? "Scanning SMS..." : "Scan All SMS Messages"}
@@ -308,7 +308,7 @@ export default function FraudScanScreen() {
         <Button
           onPress={handleScan}
           disabled={!message.trim() || isScanning}
-          style={{ backgroundColor: NexaVaultColors.primary, flex: 1 }}
+          style={{ backgroundColor: KAVACHColors.primary, flex: 1 }}
         >
           {isScanning ? "Scanning..." : "Scan for Fraud"}
         </Button>
@@ -325,7 +325,7 @@ export default function FraudScanScreen() {
       {isScanning ? (
         <View style={styles.scanningContainer}>
           <Animated.View style={scanAnimatedStyle}>
-            <Feather name="loader" size={48} color={NexaVaultColors.primary} />
+            <Feather name="loader" size={48} color={KAVACHColors.primary} />
           </Animated.View>
           <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.lg }}>
             Analyzing message patterns...
@@ -377,7 +377,7 @@ export default function FraudScanScreen() {
                 </ThemedText>
                 {recommendations.map((rec, index) => (
                   <View key={index} style={styles.recommendationTag}>
-                    <Feather name="shield" size={12} color={NexaVaultColors.success} />
+                    <Feather name="shield" size={12} color={KAVACHColors.success} />
                     <ThemedText type="caption" style={{ color: theme.text, marginLeft: Spacing.sm, flex: 1 }}>
                       {rec}
                     </ThemedText>
@@ -394,19 +394,19 @@ export default function FraudScanScreen() {
           Tips to stay safe:
         </ThemedText>
         <View style={styles.tipItem}>
-          <Feather name="check" size={16} color={NexaVaultColors.success} />
+          <Feather name="check" size={16} color={KAVACHColors.success} />
           <ThemedText type="caption" style={{ marginLeft: Spacing.sm, flex: 1 }}>
             Never share OTP or PIN with anyone
           </ThemedText>
         </View>
         <View style={styles.tipItem}>
-          <Feather name="check" size={16} color={NexaVaultColors.success} />
+          <Feather name="check" size={16} color={KAVACHColors.success} />
           <ThemedText type="caption" style={{ marginLeft: Spacing.sm, flex: 1 }}>
             Banks never ask for personal details via SMS
           </ThemedText>
         </View>
         <View style={styles.tipItem}>
-          <Feather name="check" size={16} color={NexaVaultColors.success} />
+          <Feather name="check" size={16} color={KAVACHColors.success} />
           <ThemedText type="caption" style={{ marginLeft: Spacing.sm, flex: 1 }}>
             Verify sender before clicking any links
           </ThemedText>

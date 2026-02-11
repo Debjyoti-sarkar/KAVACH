@@ -1,7 +1,7 @@
 # Stop any running Metro bundler
 Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
 
-Write-Host "Building NexaVault Web Version..." -ForegroundColor Green
+Write-Host "Building KAVACH Web Version..." -ForegroundColor Green
 Set-Location $PSScriptRoot
 
 # Build for web

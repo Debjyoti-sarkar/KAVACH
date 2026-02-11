@@ -51,7 +51,7 @@ export async function isAadhaarLinkedSecure() {
   SECURE SIM SERIAL
 ------------------------------------------------------------------*/
 const SIM_SERIAL_KEY = "secure_sim_serial_hash";
-const SIM_REGISTERED_KEY = "@nexavault_sim_registered";
+const SIM_REGISTERED_KEY = "@kavach_sim_registered";
 
 export async function saveSIMSerial(serialNumber: string) {
   const hash = CryptoJS.SHA256(serialNumber).toString();
@@ -87,14 +87,14 @@ const ALL_SECURE_KEYS = [
 ];
 
 const ALL_ASYNC_STORAGE_KEYS = [
-  "@nexavault_auth",
-  "@nexavault_user",
-  "@nexavault_onboarding",
+  "@kavach_auth",
+  "@kavach_user",
+  "@kavach_onboarding",
   SIM_REGISTERED_KEY,
-  "@nexavault_session",
-  "@nexavault_fraud_records",
-  "@nexavault_dashboard_stats",
-  "@nexavault_behavior_logs",
+  "@kavach_session",
+  "@kavach_fraud_records",
+  "@kavach_dashboard_stats",
+  "@kavach_behavior_logs",
 ];
 
 export async function wipeAllAppData(): Promise<{ success: boolean; error?: string }> {

@@ -35,7 +35,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import { useTheme } from '@/hooks/useTheme';
 import { useSMSMonitor } from '@/hooks/useSMSMonitor';
-import { Spacing, BorderRadius, NexaVaultColors } from '@/constants/theme';
+import { Spacing, BorderRadius, KAVACHColors } from '@/constants/theme';
 import { SMSFraudRecord, FraudAnalysis } from '@/services/RealTimeSMSMonitor';
 
 export default function SMSFraudDashboard() {
@@ -164,9 +164,9 @@ export default function SMSFraudDashboard() {
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'safe': return NexaVaultColors.success;
-      case 'warning': return NexaVaultColors.warning;
-      case 'danger': return NexaVaultColors.sos;
+      case 'safe': return KAVACHColors.success;
+      case 'warning': return KAVACHColors.warning;
+      case 'danger': return KAVACHColors.sos;
       default: return theme.textSecondary;
     }
   };
@@ -245,18 +245,18 @@ export default function SMSFraudDashboard() {
       {item.userAction === 'pending' && (
         <View style={styles.alertActions}>
           <Pressable
-            style={[styles.actionButton, { backgroundColor: NexaVaultColors.sos + '15' }]}
+            style={[styles.actionButton, { backgroundColor: KAVACHColors.sos + '15' }]}
             onPress={() => handleAlertAction(item, 'block')}
           >
-            <Feather name="slash" size={14} color={NexaVaultColors.sos} />
-            <ThemedText type="caption" style={{ color: NexaVaultColors.sos, marginLeft: 4 }}>Block</ThemedText>
+            <Feather name="slash" size={14} color={KAVACHColors.sos} />
+            <ThemedText type="caption" style={{ color: KAVACHColors.sos, marginLeft: 4 }}>Block</ThemedText>
           </Pressable>
           <Pressable
-            style={[styles.actionButton, { backgroundColor: NexaVaultColors.warning + '15' }]}
+            style={[styles.actionButton, { backgroundColor: KAVACHColors.warning + '15' }]}
             onPress={() => handleAlertAction(item, 'report')}
           >
-            <Feather name="flag" size={14} color={NexaVaultColors.warning} />
-            <ThemedText type="caption" style={{ color: NexaVaultColors.warning, marginLeft: 4 }}>Report</ThemedText>
+            <Feather name="flag" size={14} color={KAVACHColors.warning} />
+            <ThemedText type="caption" style={{ color: KAVACHColors.warning, marginLeft: 4 }}>Report</ThemedText>
           </Pressable>
           <Pressable
             style={[styles.actionButton, { backgroundColor: theme.border }]}
@@ -273,7 +273,7 @@ export default function SMSFraudDashboard() {
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundDefault }]}>
-        <Feather name="shield" size={48} color={NexaVaultColors.primary} />
+        <Feather name="shield" size={48} color={KAVACHColors.primary} />
         <ThemedText type="small" style={{ marginTop: Spacing.md, color: theme.textSecondary }}>
           Initializing SMS Protection...
         </ThemedText>
@@ -291,12 +291,12 @@ export default function SMSFraudDashboard() {
     >
       {/* Header */}
       <Animated.View entering={FadeIn.duration(500)} style={styles.header}>
-        <View style={[styles.shieldContainer, { backgroundColor: isMonitoring ? NexaVaultColors.success + '15' : theme.backgroundSecondary }]}>
+        <View style={[styles.shieldContainer, { backgroundColor: isMonitoring ? KAVACHColors.success + '15' : theme.backgroundSecondary }]}>
           <Animated.View style={isMonitoring ? pulseStyle : undefined}>
             <Feather
               name="shield"
               size={64}
-              color={isMonitoring ? NexaVaultColors.success : theme.textSecondary}
+              color={isMonitoring ? KAVACHColors.success : theme.textSecondary}
             />
           </Animated.View>
         </View>
@@ -309,9 +309,9 @@ export default function SMSFraudDashboard() {
             : 'Enable real-time protection to scan messages'}
         </ThemedText>
         {isMockMode && (
-          <View style={[styles.mockBadge, { backgroundColor: NexaVaultColors.warning + '20' }]}>
-            <Feather name="info" size={12} color={NexaVaultColors.warning} />
-            <ThemedText type="caption" style={{ color: NexaVaultColors.warning, marginLeft: 4 }}>
+          <View style={[styles.mockBadge, { backgroundColor: KAVACHColors.warning + '20' }]}>
+            <Feather name="info" size={12} color={KAVACHColors.warning} />
+            <ThemedText type="caption" style={{ color: KAVACHColors.warning, marginLeft: 4 }}>
               Demo Mode - Build for real SMS
             </ThemedText>
           </View>
@@ -335,8 +335,8 @@ export default function SMSFraudDashboard() {
           <Switch
             value={isMonitoring}
             onValueChange={handleToggleMonitoring}
-            trackColor={{ false: theme.border, true: NexaVaultColors.success + '50' }}
-            thumbColor={isMonitoring ? NexaVaultColors.success : theme.textSecondary}
+            trackColor={{ false: theme.border, true: KAVACHColors.success + '50' }}
+            thumbColor={isMonitoring ? KAVACHColors.success : theme.textSecondary}
           />
         </View>
       </Animated.View>
@@ -347,7 +347,7 @@ export default function SMSFraudDashboard() {
         style={styles.statsGrid}
       >
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText type="h2" style={{ color: NexaVaultColors.primary }}>
+          <ThemedText type="h2" style={{ color: KAVACHColors.primary }}>
             {stats.totalScanned}
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -355,7 +355,7 @@ export default function SMSFraudDashboard() {
           </ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText type="h2" style={{ color: NexaVaultColors.success }}>
+          <ThemedText type="h2" style={{ color: KAVACHColors.success }}>
             {stats.safeCount}
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -363,7 +363,7 @@ export default function SMSFraudDashboard() {
           </ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText type="h2" style={{ color: NexaVaultColors.warning }}>
+          <ThemedText type="h2" style={{ color: KAVACHColors.warning }}>
             {stats.warningCount}
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -371,7 +371,7 @@ export default function SMSFraudDashboard() {
           </ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText type="h2" style={{ color: NexaVaultColors.sos }}>
+          <ThemedText type="h2" style={{ color: KAVACHColors.sos }}>
             {stats.dangerCount}
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -388,7 +388,7 @@ export default function SMSFraudDashboard() {
         <Button
           onPress={handleScanAll}
           disabled={isScanning}
-          style={{ backgroundColor: NexaVaultColors.primary, flex: 1 }}
+          style={{ backgroundColor: KAVACHColors.primary, flex: 1 }}
         >
           <Animated.View style={isScanning ? scanStyle : undefined}>
             <Feather name="search" size={18} color="#FFFFFF" />
@@ -404,22 +404,22 @@ export default function SMSFraudDashboard() {
         <Pressable
           style={[
             styles.tab,
-            selectedTab === 'alerts' && { borderBottomColor: NexaVaultColors.primary, borderBottomWidth: 2 }
+            selectedTab === 'alerts' && { borderBottomColor: KAVACHColors.primary, borderBottomWidth: 2 }
           ]}
           onPress={() => setSelectedTab('alerts')}
         >
-          <ThemedText type="small" style={{ color: selectedTab === 'alerts' ? NexaVaultColors.primary : theme.textSecondary }}>
+          <ThemedText type="small" style={{ color: selectedTab === 'alerts' ? KAVACHColors.primary : theme.textSecondary }}>
             Recent Alerts ({recentAlerts.length})
           </ThemedText>
         </Pressable>
         <Pressable
           style={[
             styles.tab,
-            selectedTab === 'blocked' && { borderBottomColor: NexaVaultColors.primary, borderBottomWidth: 2 }
+            selectedTab === 'blocked' && { borderBottomColor: KAVACHColors.primary, borderBottomWidth: 2 }
           ]}
           onPress={() => setSelectedTab('blocked')}
         >
-          <ThemedText type="small" style={{ color: selectedTab === 'blocked' ? NexaVaultColors.primary : theme.textSecondary }}>
+          <ThemedText type="small" style={{ color: selectedTab === 'blocked' ? KAVACHColors.primary : theme.textSecondary }}>
             Blocked ({blockedSenders.length})
           </ThemedText>
         </Pressable>
@@ -468,7 +468,7 @@ export default function SMSFraudDashboard() {
                 style={[styles.blockedItem, { backgroundColor: theme.card }]}
               >
                 <View style={styles.blockedItemContent}>
-                  <Feather name="slash" size={16} color={NexaVaultColors.sos} />
+                  <Feather name="slash" size={16} color={KAVACHColors.sos} />
                   <ThemedText type="small" style={{ marginLeft: Spacing.sm }}>
                     {sender}
                   </ThemedText>
@@ -495,13 +495,13 @@ export default function SMSFraudDashboard() {
 
       {/* Info Card */}
       <View style={[styles.infoCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <Feather name="info" size={16} color={NexaVaultColors.primary} />
+        <Feather name="info" size={16} color={KAVACHColors.primary} />
         <View style={{ marginLeft: Spacing.md, flex: 1 }}>
           <ThemedText type="small" style={{ fontWeight: '600', marginBottom: 4 }}>
             How it works
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            NexaVault analyzes incoming SMS in real-time using AI-powered fraud detection.
+            KAVACH analyzes incoming SMS in real-time using AI-powered fraud detection.
             Messages are scored from 0-100% risk and categorized as Safe, Warning, or Danger.
           </ThemedText>
         </View>

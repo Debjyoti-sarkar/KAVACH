@@ -22,7 +22,7 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -71,8 +71,8 @@ function ContactListItem({
         animatedStyle,
       ]}
     >
-      <View style={[styles.avatar, { backgroundColor: NexaVaultColors.primary + "20" }]}>
-        <ThemedText style={[styles.avatarText, { color: NexaVaultColors.primary }]}>
+      <View style={[styles.avatar, { backgroundColor: KAVACHColors.primary + "20" }]}>
+        <ThemedText style={[styles.avatarText, { color: KAVACHColors.primary }]}>
           {getInitials(contact.name)}
         </ThemedText>
       </View>
@@ -191,7 +191,7 @@ export default function ContactPickerScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+          <ActivityIndicator size="large" color={KAVACHColors.primary} />
           <ThemedText style={styles.loadingText}>Loading contacts...</ThemedText>
         </View>
       </View>
@@ -211,7 +211,7 @@ export default function ContactPickerScreen() {
           </ThemedText>
           <Pressable
             onPress={loadContacts}
-            style={[styles.retryButton, { backgroundColor: NexaVaultColors.primary }]}
+            style={[styles.retryButton, { backgroundColor: KAVACHColors.primary }]}
           >
             <ThemedText style={{ color: "#FFFFFF", fontWeight: "600" }}>
               Grant Permission

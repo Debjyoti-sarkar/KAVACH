@@ -2,7 +2,7 @@
 import * as SecureStore from "expo-secure-store";
 import CryptoJS from "crypto-js";
 
-const OTP_STORAGE_KEY = "nexavault_otp_data";
+const OTP_STORAGE_KEY = "kavach_otp_data";
 
 interface OTPData {
   phone: string;

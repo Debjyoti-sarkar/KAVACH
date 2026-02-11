@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { v4 as uuidv4 } from "uuid";
 
-const QUEUE_KEY = "@nexavault_queue_v1";
+const QUEUE_KEY = "@kavach_queue_v1";
 
 export type QueueItem = {
   id: string;                 // unique

@@ -1,5 +1,5 @@
 // -------------------------------
-//  NEXAVAULT MASTER BACKEND
+//  KAVACH MASTER BACKEND
 // -------------------------------
 
 import express from "express";
@@ -39,7 +39,7 @@ const deepgram = createClient(process.env.DEEPGRAM_API_KEY || "");
 // --------------------------------------
 // Connect MongoDB (optional for behavior)
 // --------------------------------------
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/nexavault";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kavach";
 
 mongoose
   .connect(MONGODB_URI)
@@ -211,7 +211,7 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n============================================`);
-  console.log(`✅ NexaVault Backend Running on port ${PORT}`);
+  console.log(`✅ KAVACH Backend Running on port ${PORT}`);
   console.log(`📍 Health: http://localhost:${PORT}/health`);
   console.log(`🎤 STT: POST /assistant/transcribe`);
   console.log(`🧠 NLU: POST /assistant/parse`);

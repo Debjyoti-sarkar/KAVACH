@@ -9,7 +9,7 @@ import Animated, {
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { BorderRadius, Spacing, NexaVaultColors } from "@/constants/theme";
+import { BorderRadius, Spacing, KAVACHColors } from "@/constants/theme";
 
 interface ButtonProps {
   onPress?: () => void;
@@ -57,11 +57,11 @@ export function Button({
   const getBackgroundColor = () => {
     if (variant === "outline") return "transparent";
     if (variant === "secondary") return theme.backgroundSecondary;
-    return NexaVaultColors.primary;
+    return KAVACHColors.primary;
   };
 
   const getTextColor = () => {
-    if (variant === "outline") return NexaVaultColors.primary;
+    if (variant === "outline") return KAVACHColors.primary;
     if (variant === "secondary") return theme.text;
     return "#FFFFFF";
   };
@@ -78,7 +78,7 @@ export function Button({
           backgroundColor: getBackgroundColor(),
           opacity: disabled ? 0.5 : 1,
           borderWidth: variant === "outline" ? 1 : 0,
-          borderColor: NexaVaultColors.primary,
+          borderColor: KAVACHColors.primary,
         },
         style,
         animatedStyle,

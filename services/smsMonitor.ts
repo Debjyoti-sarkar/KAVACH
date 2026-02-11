@@ -103,7 +103,7 @@ class SMSMonitorService {
         PermissionsAndroid.PERMISSIONS.READ_SMS,
         {
           title: 'SMS Permission',
-          message: 'NexaVault needs to read SMS to detect fraud messages and protect you from scams.',
+          message: 'KAVACH needs to read SMS to detect fraud messages and protect you from scams.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
@@ -114,7 +114,7 @@ class SMSMonitorService {
         PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
         {
           title: 'Receive SMS Permission',
-          message: 'NexaVault needs to receive SMS notifications to detect fraud in real-time.',
+          message: 'KAVACH needs to receive SMS notifications to detect fraud in real-time.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',

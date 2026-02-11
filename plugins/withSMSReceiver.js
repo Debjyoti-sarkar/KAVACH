@@ -19,7 +19,7 @@ const { mkdirSync, writeFileSync, existsSync } = require('fs');
 const path = require('path');
 
 // SMS Broadcast Receiver Java Code
-const SMS_RECEIVER_CODE = `package com.nexavault.app;
+const SMS_RECEIVER_CODE = `package com.kavach.app;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -124,7 +124,7 @@ public class SMSReceiver extends BroadcastReceiver {
 }`;
 
 // Foreground Service Java Code
-const SMS_SERVICE_CODE = `package com.nexavault.app;
+const SMS_SERVICE_CODE = `package com.kavach.app;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -348,7 +348,7 @@ public class SMSAnalysisService extends Service {
 
     private Notification createProcessingNotification() {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("NexaVault")
+            .setContentTitle("KAVACH")
             .setContentText("Analyzing message for fraud...")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -404,7 +404,7 @@ public class SMSAnalysisService extends Service {
 }`;
 
 // React Native Module Java Code
-const SMS_MODULE_CODE = `package com.nexavault.app;
+const SMS_MODULE_CODE = `package com.kavach.app;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -563,7 +563,7 @@ public class SMSModule extends ReactContextBaseJavaModule {
 }`;
 
 // React Native Module Package Java Code
-const SMS_PACKAGE_CODE = `package com.nexavault.app;
+const SMS_PACKAGE_CODE = `package com.kavach.app;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

@@ -17,7 +17,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 export default function QRScannerScreen() {
@@ -92,8 +92,8 @@ export default function QRScannerScreen() {
           ]}
         >
           <View style={styles.permissionContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.warning + "20" }]}>
-              <Feather name="camera-off" size={48} color={NexaVaultColors.warning} />
+            <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.warning + "20" }]}>
+              <Feather name="camera-off" size={48} color={KAVACHColors.warning} />
             </View>
             <ThemedText type="h3" style={styles.permissionTitle}>
               Camera Access Required
@@ -110,7 +110,7 @@ export default function QRScannerScreen() {
                     console.log("Cannot open settings");
                   }
                 }}
-                style={{ backgroundColor: NexaVaultColors.primary, marginTop: Spacing.xl }}
+                style={{ backgroundColor: KAVACHColors.primary, marginTop: Spacing.xl }}
               >
                 Open Settings
               </Button>
@@ -138,18 +138,18 @@ export default function QRScannerScreen() {
         ]}
       >
         <View style={styles.permissionContainer}>
-          <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.primary + "20" }]}>
-            <Feather name="camera" size={48} color={NexaVaultColors.primary} />
+          <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.primary + "20" }]}>
+            <Feather name="camera" size={48} color={KAVACHColors.primary} />
           </View>
           <ThemedText type="h3" style={styles.permissionTitle}>
             Camera Permission
           </ThemedText>
           <ThemedText type="small" style={[styles.permissionText, { color: theme.textSecondary }]}>
-            NEXAVAULT needs camera access to scan QR codes for secure payments.
+            KAVACH needs camera access to scan QR codes for secure payments.
           </ThemedText>
           <Button
             onPress={requestPermission}
-            style={{ backgroundColor: NexaVaultColors.primary, marginTop: Spacing.xl }}
+            style={{ backgroundColor: KAVACHColors.primary, marginTop: Spacing.xl }}
           >
             Enable Camera
           </Button>
@@ -171,8 +171,8 @@ export default function QRScannerScreen() {
         ]}
       >
         <View style={styles.permissionContainer}>
-          <View style={[styles.iconCircle, { backgroundColor: NexaVaultColors.info + "20" }]}>
-            <Feather name="smartphone" size={48} color={NexaVaultColors.info} />
+          <View style={[styles.iconCircle, { backgroundColor: KAVACHColors.info + "20" }]}>
+            <Feather name="smartphone" size={48} color={KAVACHColors.info} />
           </View>
           <ThemedText type="h3" style={styles.permissionTitle}>
             Use Expo Go
@@ -182,10 +182,10 @@ export default function QRScannerScreen() {
           </ThemedText>
           <Pressable
             onPress={() => navigation.navigate("SendMoney")}
-            style={[styles.manualButton, { borderColor: NexaVaultColors.primary }]}
+            style={[styles.manualButton, { borderColor: KAVACHColors.primary }]}
           >
-            <Feather name="edit-3" size={20} color={NexaVaultColors.primary} />
-            <ThemedText style={{ color: NexaVaultColors.primary, marginLeft: Spacing.sm }}>
+            <Feather name="edit-3" size={20} color={KAVACHColors.primary} />
+            <ThemedText style={{ color: KAVACHColors.primary, marginLeft: Spacing.sm }}>
               {t("manualEntry")}
             </ThemedText>
           </Pressable>
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     height: 2,
-    backgroundColor: NexaVaultColors.primary,
+    backgroundColor: KAVACHColors.primary,
     top: 25,
   },
   overlayBottom: {

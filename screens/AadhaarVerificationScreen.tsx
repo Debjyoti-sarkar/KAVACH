@@ -29,13 +29,13 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScreenSecurity } from "@/hooks/useScreenSecurity";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import {
   aadhaarService,
   AadhaarData,
 } from "@/services/digilockerService";
 
-const USER_KEY = "@nexavault_user";
+const USER_KEY = "@kavach_user";
 
 type VerificationStep = "input" | "otp" | "verified";
 
@@ -249,8 +249,8 @@ export default function AadhaarVerificationScreen() {
     return (
       <ScreenScrollView>
         <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.success + "15" }]}>
-            <Feather name="check-circle" size={32} color={NexaVaultColors.success} />
+          <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.success + "15" }]}>
+            <Feather name="check-circle" size={32} color={KAVACHColors.success} />
           </View>
           <ThemedText type="h3" style={styles.title}>Aadhaar Verified</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -297,8 +297,8 @@ export default function AadhaarVerificationScreen() {
           <View style={styles.verifiedRow}>
             <ThemedText style={{ color: theme.textSecondary }}>Status</ThemedText>
             <View style={styles.statusBadge}>
-              <Feather name="check" size={14} color={NexaVaultColors.success} />
-              <ThemedText style={{ color: NexaVaultColors.success, marginLeft: 4 }}>
+              <Feather name="check" size={14} color={KAVACHColors.success} />
+              <ThemedText style={{ color: KAVACHColors.success, marginLeft: 4 }}>
                 Verified
               </ThemedText>
             </View>
@@ -323,7 +323,7 @@ export default function AadhaarVerificationScreen() {
         {aadhaarData?.address && (aadhaarData.address.locality || aadhaarData.address.district) && (
           <View style={[styles.addressCard, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.addressHeader}>
-              <Feather name="map-pin" size={18} color={NexaVaultColors.primary} />
+              <Feather name="map-pin" size={18} color={KAVACHColors.primary} />
               <ThemedText style={{ fontWeight: "600", marginLeft: Spacing.sm }}>Address</ThemedText>
             </View>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
@@ -352,8 +352,8 @@ export default function AadhaarVerificationScreen() {
           <Feather name="shield" size={24} color="#E65100" />
         </View>
 
-        <View style={[styles.benefitsCard, { backgroundColor: NexaVaultColors.info + "10" }]}>
-          <Feather name="shield" size={20} color={NexaVaultColors.info} />
+        <View style={[styles.benefitsCard, { backgroundColor: KAVACHColors.info + "10" }]}>
+          <Feather name="shield" size={20} color={KAVACHColors.info} />
           <View style={styles.benefitsText}>
             <ThemedText style={{ fontWeight: "500" }}>Enhanced Security</ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -374,8 +374,8 @@ export default function AadhaarVerificationScreen() {
     return (
       <ScreenScrollView>
         <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-            <Feather name="shield" size={32} color={NexaVaultColors.primary} />
+          <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+            <Feather name="shield" size={32} color={KAVACHColors.primary} />
           </View>
           <ThemedText type="h3" style={styles.title}>Aadhaar Verification</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -385,8 +385,8 @@ export default function AadhaarVerificationScreen() {
 
         {/* API Status Warning */}
         {apiConfigured === false && (
-          <View style={[styles.warningCard, { backgroundColor: NexaVaultColors.warning + "15" }]}>
-            <Feather name="alert-triangle" size={20} color={NexaVaultColors.warning} />
+          <View style={[styles.warningCard, { backgroundColor: KAVACHColors.warning + "15" }]}>
+            <Feather name="alert-triangle" size={20} color={KAVACHColors.warning} />
             <ThemedText style={[styles.warningText, { color: theme.text }]}>
               Aadhaar verification service is currently being configured. Please try again later.
             </ThemedText>
@@ -402,7 +402,7 @@ export default function AadhaarVerificationScreen() {
               styles.input,
               {
                 backgroundColor: theme.card,
-                borderColor: validationError ? NexaVaultColors.sos : theme.border,
+                borderColor: validationError ? KAVACHColors.sos : theme.border,
                 color: theme.text
               },
             ]}
@@ -419,8 +419,8 @@ export default function AadhaarVerificationScreen() {
           )}
         </View>
 
-        <View style={[styles.infoCard, { backgroundColor: NexaVaultColors.info + "10" }]}>
-          <Feather name="info" size={20} color={NexaVaultColors.info} />
+        <View style={[styles.infoCard, { backgroundColor: KAVACHColors.info + "10" }]}>
+          <Feather name="info" size={20} color={KAVACHColors.info} />
           <ThemedText style={[styles.infoText, { color: theme.text }]}>
             An OTP will be sent to your Aadhaar-registered mobile number for verification. Make sure your mobile number is linked with your Aadhaar.
           </ThemedText>
@@ -445,22 +445,22 @@ export default function AadhaarVerificationScreen() {
           <ThemedText type="h4" style={styles.benefitsTitle}>Why verify Aadhaar?</ThemedText>
 
           <View style={styles.benefitItem}>
-            <Feather name="trending-up" size={20} color={NexaVaultColors.primary} />
+            <Feather name="trending-up" size={20} color={KAVACHColors.primary} />
             <ThemedText style={{ flex: 1 }}>Higher transaction limits (up to ₹2,00,000)</ThemedText>
           </View>
 
           <View style={styles.benefitItem}>
-            <Feather name="shield" size={20} color={NexaVaultColors.primary} />
+            <Feather name="shield" size={20} color={KAVACHColors.primary} />
             <ThemedText style={{ flex: 1 }}>Enhanced account security</ThemedText>
           </View>
 
           <View style={styles.benefitItem}>
-            <Feather name="check-circle" size={20} color={NexaVaultColors.primary} />
+            <Feather name="check-circle" size={20} color={KAVACHColors.primary} />
             <ThemedText style={{ flex: 1 }}>Complete KYC verification</ThemedText>
           </View>
 
           <View style={styles.benefitItem}>
-            <Feather name="zap" size={20} color={NexaVaultColors.primary} />
+            <Feather name="zap" size={20} color={KAVACHColors.primary} />
             <ThemedText style={{ flex: 1 }}>Instant bank account linking</ThemedText>
           </View>
         </View>
@@ -476,8 +476,8 @@ export default function AadhaarVerificationScreen() {
           <Pressable style={styles.backButton} onPress={() => { setStep("input"); setOtp(""); }}>
             <Feather name="arrow-left" size={24} color={theme.text} />
           </Pressable>
-          <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-            <Feather name="message-square" size={32} color={NexaVaultColors.primary} />
+          <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+            <Feather name="message-square" size={32} color={KAVACHColors.primary} />
           </View>
           <ThemedText type="h3" style={styles.title}>Enter OTP</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -519,7 +519,7 @@ export default function AadhaarVerificationScreen() {
           disabled={resendTimer > 0 || isLoading}
         >
           <ThemedText
-            style={{ color: resendTimer > 0 ? theme.textSecondary : NexaVaultColors.primary }}
+            style={{ color: resendTimer > 0 ? theme.textSecondary : KAVACHColors.primary }}
           >
             {resendTimer > 0
               ? `Resend OTP in ${resendTimer}s`
@@ -527,8 +527,8 @@ export default function AadhaarVerificationScreen() {
           </ThemedText>
         </Pressable>
 
-        <View style={[styles.infoCard, { backgroundColor: NexaVaultColors.warning + "10" }]}>
-          <Feather name="clock" size={20} color={NexaVaultColors.warning} />
+        <View style={[styles.infoCard, { backgroundColor: KAVACHColors.warning + "10" }]}>
+          <Feather name="clock" size={20} color={KAVACHColors.warning} />
           <ThemedText style={[styles.infoText, { color: theme.text }]}>
             OTP is valid for 10 minutes. If you don't receive the OTP, check if your mobile number is linked with your Aadhaar.
           </ThemedText>
@@ -555,7 +555,7 @@ export default function AadhaarVerificationScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <ActivityIndicator size="large" color={NexaVaultColors.primary} />
+        <ActivityIndicator size="large" color={KAVACHColors.primary} />
         <ThemedText style={{ marginTop: Spacing.lg }}>Loading...</ThemedText>
       </View>
     </ScreenScrollView>
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 3,
-    borderColor: NexaVaultColors.success,
+    borderColor: KAVACHColors.success,
   },
   inputContainer: {
     marginBottom: Spacing.lg,
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   errorText: {
-    color: NexaVaultColors.sos,
+    color: KAVACHColors.sos,
     fontSize: 12,
     marginTop: Spacing.xs,
   },

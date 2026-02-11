@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nexavault-backend
+    name: kavach-backend
     env: node
     buildCommand: npm install
     startCommand: node index.js

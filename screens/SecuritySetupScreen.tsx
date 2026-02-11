@@ -19,7 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveSecurePin, saveBiometricFlag, saveAadhaar } from "@/utils/secureManager";
 import simService from "@/services/SIMService";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const PIN_LENGTH = 6;
@@ -74,7 +74,7 @@ export default function SecuritySetupScreen() {
       }
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Enable ${biometricType} for NEXAVAULT`,
+        promptMessage: `Enable ${biometricType} for KAVACH`,
         fallbackLabel: "Use PIN instead",
       });
 
@@ -247,23 +247,23 @@ export default function SecuritySetupScreen() {
 
   const renderBiometricStep = () => (
     <View style={styles.stepContainer}>
-      <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
+      <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
         <Feather
           name={biometricType === "Face ID" ? "smile" : "lock"}
           size={48}
-          color={NexaVaultColors.primary}
+          color={KAVACHColors.primary}
         />
       </View>
       <ThemedText type="h2" style={styles.title}>
         {t("setupBiometric")}
       </ThemedText>
       <ThemedText type="small" style={[styles.subtitle, { color: theme.textSecondary }]}>
-        Enable {biometricType} for quick and secure access to NEXAVAULT
+        Enable {biometricType} for quick and secure access to KAVACH
       </ThemedText>
 
       <Button
         onPress={handleBiometricSetup}
-        style={[styles.actionButton, { backgroundColor: NexaVaultColors.primary }]}
+        style={[styles.actionButton, { backgroundColor: KAVACHColors.primary }]}
       >
         Enable {biometricType}
       </Button>
@@ -278,8 +278,8 @@ export default function SecuritySetupScreen() {
 
   const renderPinStep = (isConfirm: boolean) => (
     <View style={styles.stepContainer}>
-      <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-        <Feather name="lock" size={48} color={NexaVaultColors.primary} />
+      <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+        <Feather name="lock" size={48} color={KAVACHColors.primary} />
       </View>
       <ThemedText type="h2" style={styles.title}>
         {isConfirm ? t("confirmPin") : t("createPin")}
@@ -301,8 +301,8 @@ export default function SecuritySetupScreen() {
                   backgroundColor:
                     (isConfirm ? confirmPin : pin).length > index
                       ? pinError
-                        ? NexaVaultColors.sos
-                        : NexaVaultColors.primary
+                        ? KAVACHColors.sos
+                        : KAVACHColors.primary
                       : theme.border,
                 },
               ]}
@@ -321,7 +321,7 @@ export default function SecuritySetupScreen() {
       </Animated.View>
 
       {pinError ? (
-        <ThemedText type="small" style={[styles.errorText, { color: NexaVaultColors.sos }]}>
+        <ThemedText type="small" style={[styles.errorText, { color: KAVACHColors.sos }]}>
           PINs do not match. Please try again.
         </ThemedText>
       ) : null}
@@ -345,8 +345,8 @@ export default function SecuritySetupScreen() {
 
   const renderAadhaarStep = () => (
     <View style={styles.stepContainer}>
-      <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-        <Feather name="shield" size={48} color={NexaVaultColors.primary} />
+      <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+        <Feather name="shield" size={48} color={KAVACHColors.primary} />
       </View>
       <ThemedText type="h2" style={styles.title}>
         {t("aadhaarVerification")}
@@ -363,7 +363,7 @@ export default function SecuritySetupScreen() {
 
       <Button
         onPress={handleAadhaarLink}
-        style={[styles.actionButton, { backgroundColor: NexaVaultColors.primary }]}
+        style={[styles.actionButton, { backgroundColor: KAVACHColors.primary }]}
       >
         Link Aadhaar
       </Button>
@@ -387,9 +387,9 @@ export default function SecuritySetupScreen() {
               {
                 backgroundColor:
                   step === s || (step === "pin_confirm" && s === "pin_create")
-                    ? NexaVaultColors.primary
+                    ? KAVACHColors.primary
                     : (step === "pin_confirm" && index < 1)
-                    ? NexaVaultColors.primary
+                    ? KAVACHColors.primary
                     : theme.border,
               },
             ]}
@@ -415,7 +415,7 @@ function FeatureItem({
 }) {
   return (
     <View style={styles.featureItem}>
-      <Feather name={icon} size={20} color={NexaVaultColors.success} />
+      <Feather name={icon} size={20} color={KAVACHColors.success} />
       <ThemedText type="small" style={{ marginLeft: Spacing.sm }}>
         {text}
       </ThemedText>

@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScreenInsets } from "@/hooks/useScreenInsets";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
 
 import { speak } from "../utils/speak";
@@ -47,13 +47,13 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
   const getTypeColor = () => {
     switch (transaction.type) {
       case "sent":
-        return NexaVaultColors.sos;
+        return KAVACHColors.sos;
       case "received":
-        return NexaVaultColors.success;
+        return KAVACHColors.success;
       case "refund":
-        return NexaVaultColors.info;
+        return KAVACHColors.info;
       case "failed":
-        return NexaVaultColors.textSecondary;
+        return KAVACHColors.textSecondary;
     }
   };
 
@@ -104,7 +104,7 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
               color:
                 transaction.type === "sent" || transaction.type === "failed"
                   ? theme.text
-                  : NexaVaultColors.success,
+                  : KAVACHColors.success,
             },
           ]}
         >
@@ -112,11 +112,11 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
         </ThemedText>
 
         {transaction.status === "failed" ? (
-          <ThemedText type="caption" style={{ color: NexaVaultColors.sos }}>
+          <ThemedText type="caption" style={{ color: KAVACHColors.sos }}>
             Failed
           </ThemedText>
         ) : transaction.status === "pending" ? (
-          <ThemedText type="caption" style={{ color: NexaVaultColors.warning }}>
+          <ThemedText type="caption" style={{ color: KAVACHColors.warning }}>
             Pending
           </ThemedText>
         ) : null}
@@ -168,7 +168,7 @@ function FilterButton({ label, isActive, onPress }: any) {
       onPress={onPress}
       style={[
         styles.filterButton,
-        { backgroundColor: isActive ? NexaVaultColors.primary : theme.backgroundSecondary },
+        { backgroundColor: isActive ? KAVACHColors.primary : theme.backgroundSecondary },
       ]}
     >
       <ThemedText type="small" style={{ color: isActive ? "#FFF" : theme.text, fontWeight: "500" }}>

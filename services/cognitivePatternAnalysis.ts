@@ -106,7 +106,7 @@ export interface BehaviorFlag {
   riskImpact: number;
 }
 
-const STORAGE_KEY = '@nexavault_cognitive_profile';
+const STORAGE_KEY = '@kavach_cognitive_profile';
 
 // Thresholds for cognitive analysis
 const COGNITIVE_THRESHOLDS = {

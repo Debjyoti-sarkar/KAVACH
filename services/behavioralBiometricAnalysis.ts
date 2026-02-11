@@ -94,7 +94,7 @@ const RISK_THRESHOLDS = {
   critical: 20
 };
 
-const STORAGE_KEY = '@nexavault_biometric_profile';
+const STORAGE_KEY = '@kavach_biometric_profile';
 const MIN_SAMPLES_FOR_PROFILE = 5;
 
 class BehavioralBiometricAnalysisService {

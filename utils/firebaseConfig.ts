@@ -6,9 +6,9 @@ import { Platform } from "react-native";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCWVRuKqklAk1w86CCG8pBu16n_mgYy2YM",
-  authDomain: "nexavault-948e8.firebaseapp.com",
-  projectId: "nexavault-948e8",
-  storageBucket: "nexavault-948e8.firebasestorage.app",
+  authDomain: "kavach-948e8.firebaseapp.com",
+  projectId: "kavach-948e8",
+  storageBucket: "kavach-948e8.firebasestorage.app",
   messagingSenderId: "66175020848",
   appId: "1:66175020848:web:80c9eb920e3b0a345022f5",
   measurementId: "G-0643THWYHB"

@@ -1,6 +1,6 @@
-# NexaVault-GDG
+# KAVACH-GDG
 
-NexaVault - Smart UPI Payment App with Voice Assistant and Fraud Detection
+KAVACH - Smart UPI Payment App with Voice Assistant and Fraud Detection
 
 ## Features
 - Voice-powered UPI transactions

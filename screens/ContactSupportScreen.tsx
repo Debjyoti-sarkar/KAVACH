@@ -6,7 +6,7 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 
 interface ContactOption {
   icon: keyof typeof Feather.glyphMap;
@@ -28,14 +28,14 @@ export default function ContactSupportScreen() {
       title: "Call Us",
       subtitle: "24/7 Helpline: 1800-XXX-XXXX",
       action: () => Linking.openURL("tel:1800XXXXXXX"),
-      color: NexaVaultColors.primary,
+      color: KAVACHColors.primary,
     },
     {
       icon: "mail",
       title: "Email",
-      subtitle: "support@nexavault.com",
-      action: () => Linking.openURL("mailto:support@nexavault.com"),
-      color: NexaVaultColors.info,
+      subtitle: "support@kavach.com",
+      action: () => Linking.openURL("mailto:support@kavach.com"),
+      color: KAVACHColors.info,
     },
     {
       icon: "message-circle",
@@ -47,8 +47,8 @@ export default function ContactSupportScreen() {
     {
       icon: "twitter",
       title: "Twitter",
-      subtitle: "@NexaVaultSupport",
-      action: () => Linking.openURL("https://twitter.com/NexaVaultSupport"),
+      subtitle: "@KAVACHSupport",
+      action: () => Linking.openURL("https://twitter.com/KAVACHSupport"),
       color: "#1DA1F2",
     },
   ];
@@ -78,8 +78,8 @@ export default function ContactSupportScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name="headphones" size={32} color={NexaVaultColors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+          <Feather name="headphones" size={32} color={KAVACHColors.primary} />
         </View>
         <ThemedText type="h3" style={styles.title}>Contact Support</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -145,7 +145,7 @@ export default function ContactSupportScreen() {
 
       {/* Office Hours */}
       <View style={[styles.hoursCard, { backgroundColor: theme.card }]}>
-        <Feather name="clock" size={20} color={NexaVaultColors.primary} />
+        <Feather name="clock" size={20} color={KAVACHColors.primary} />
         <View style={styles.hoursText}>
           <ThemedText style={{ fontWeight: "500" }}>Support Hours</ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>

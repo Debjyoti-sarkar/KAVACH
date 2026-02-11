@@ -54,9 +54,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_KEY = "@nexavault_auth";
-const USER_KEY = "@nexavault_user";
-const ONBOARDING_KEY = "@nexavault_onboarding";
+const AUTH_KEY = "@kavach_auth";
+const USER_KEY = "@kavach_user";
+const ONBOARDING_KEY = "@kavach_onboarding";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authStep, setAuthStepState] = useState<AuthStep>("language_selection");

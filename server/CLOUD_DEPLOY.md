@@ -1,11 +1,11 @@
-# Deploy NexaVault Backend to Render.com (Free 24/7 Hosting)
+# Deploy KAVACH Backend to Render.com (Free 24/7 Hosting)
 
 ## Quick Deploy Steps:
 
 ### 1. Push Backend to GitHub (if not already)
 
 ```powershell
-cd d:\NexaVault\NexaVault-App\server
+cd d:\KAVACH\KAVACH-App\server
 
 # Initialize git if needed
 git init
@@ -13,7 +13,7 @@ git add .
 git commit -m "Backend for deployment"
 
 # Create new repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/nexavault-backend.git
+git remote add origin https://github.com/YOUR_USERNAME/kavach-backend.git
 git push -u origin main
 ```
 
@@ -22,9 +22,9 @@ git push -u origin main
 1. Go to https://render.com and sign up (free)
 2. Click **"New +" → "Web Service"**
 3. Connect your GitHub account
-4. Select the `nexavault-backend` repo (or the server folder)
+4. Select the `kavach-backend` repo (or the server folder)
 5. Configure:
-   - **Name:** nexavault-backend
+   - **Name:** kavach-backend
    - **Environment:** Node
    - **Build Command:** `npm install`
    - **Start Command:** `node index.js`
@@ -45,7 +45,7 @@ git push -u origin main
 
 8. Wait 3-5 minutes for deployment
 
-9. Your backend will be live at: `https://nexavault-backend.onrender.com`
+9. Your backend will be live at: `https://kavach-backend.onrender.com`
 
 ---
 
@@ -59,7 +59,7 @@ git push -u origin main
 6. Add environment variables from `.env`
 7. Deploy!
 
-Live at: `https://nexavault-backend.up.railway.app`
+Live at: `https://kavach-backend.up.railway.app`
 
 ---
 
@@ -73,7 +73,7 @@ iwr https://fly.io/install.ps1 -useb | iex
 fly auth login
 
 # Deploy
-cd d:\NexaVault\NexaVault-App\server
+cd d:\KAVACH\KAVACH-App\server
 fly launch
 fly deploy
 ```
@@ -95,13 +95,13 @@ Change:
 
 To:
 ```javascript
-"https://nexavault-backend.onrender.com"  // or your Railway/Fly URL
+"https://kavach-backend.onrender.com"  // or your Railway/Fly URL
 ```
 
 ### Rebuild and Deploy Frontend
 
 ```powershell
-cd d:\NexaVault\NexaVault-App
+cd d:\KAVACH\KAVACH-App
 .\build-web.ps1
 vercel --prod
 ```

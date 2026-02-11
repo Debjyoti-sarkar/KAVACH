@@ -21,7 +21,7 @@ const NOTIFICATION_CATEGORIES = {
 };
 
 // Store for pending notification data
-const NOTIFICATION_DATA_KEY = '@nexavault_notification_data';
+const NOTIFICATION_DATA_KEY = '@kavach_notification_data';
 
 class NotificationService {
   private isInitialized: boolean = false;

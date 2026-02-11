@@ -25,7 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNexaSafe } from "@/contexts/NexaSafeContext";
 import { verifySecurePin } from "@/utils/secureManager";
 import { useSIMMonitor } from "@/hooks/useSIMMonitor";
-import { Spacing, BorderRadius, NexaVaultColors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const PIN_LENGTH = 6;
@@ -98,7 +98,7 @@ export default function LoginScreen() {
       if (!hasHardware || !isEnrolled) return;
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Login to NEXAVAULT",
+        promptMessage: "Login to KAVACH",
         fallbackLabel: "Use PIN instead",
       });
 
@@ -224,13 +224,13 @@ export default function LoginScreen() {
               onPress={() => handleLanguageSelect(lang.code)}
               style={[
                 styles.languageMenuItem,
-                language === lang.code && { backgroundColor: NexaVaultColors.primary + "20" },
+                language === lang.code && { backgroundColor: KAVACHColors.primary + "20" },
               ]}
             >
               <ThemedText
                 style={[
                   styles.languageMenuText,
-                  language === lang.code && { color: NexaVaultColors.primary },
+                  language === lang.code && { color: KAVACHColors.primary },
                 ]}
               >
                 {lang.nativeName}
@@ -247,9 +247,9 @@ export default function LoginScreen() {
           resizeMode="contain"
         />
         <ThemedText
-          style={[styles.appName, { color: isDark ? theme.text : NexaVaultColors.primary }]}
+          style={[styles.appName, { color: isDark ? theme.text : KAVACHColors.primary }]}
         >
-          NEXAVAULT
+          KAVACH
         </ThemedText>
         <ThemedText style={[styles.welcome, { color: theme.textSecondary }]}>
           {t("welcome")}
@@ -271,8 +271,8 @@ export default function LoginScreen() {
                       backgroundColor:
                         pin.length > index
                           ? pinError
-                            ? NexaVaultColors.sos
-                            : NexaVaultColors.primary
+                            ? KAVACHColors.sos
+                            : KAVACHColors.primary
                           : theme.border,
                     },
                   ]}
@@ -291,13 +291,13 @@ export default function LoginScreen() {
           </Animated.View>
 
           {pinError ? (
-            <ThemedText type="small" style={[styles.errorText, { color: NexaVaultColors.sos }]}>
+            <ThemedText type="small" style={[styles.errorText, { color: KAVACHColors.sos }]}>
               Incorrect PIN. Please try again.
             </ThemedText>
           ) : null}
 
           <Pressable onPress={() => {}} style={styles.forgotButton}>
-            <ThemedText type="small" style={{ color: NexaVaultColors.primary }}>
+            <ThemedText type="small" style={{ color: KAVACHColors.primary }}>
               {t("forgotPin")}
             </ThemedText>
           </Pressable>
@@ -311,9 +311,9 @@ export default function LoginScreen() {
             <Feather
               name={biometricType === "Face ID" ? "smile" : "lock"}
               size={24}
-              color={NexaVaultColors.primary}
+              color={KAVACHColors.primary}
             />
-            <ThemedText style={[styles.biometricText, { color: NexaVaultColors.primary }]}>
+            <ThemedText style={[styles.biometricText, { color: KAVACHColors.primary }]}>
               {t("useBiometric")}
             </ThemedText>
           </Pressable>

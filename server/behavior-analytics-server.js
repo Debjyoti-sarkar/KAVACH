@@ -1,5 +1,5 @@
 /**
- * NexaVault Behavior Analytics API - Node.js Version
+ * KAVACH Behavior Analytics API - Node.js Version
  * Real-time behavioral biometric analysis for fraud detection
  * Run with: node behavior-analytics-server.js
  */
@@ -744,7 +744,7 @@ const engine = new BehaviorAnalyticsEngine();
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
-        name: 'NexaVault Behavior Analytics API',
+        name: 'KAVACH Behavior Analytics API',
         version: '1.0.0',
         endpoints: {
             analyze: 'POST /analyze - Full behavior analysis',
@@ -876,7 +876,7 @@ app.post('/analyze/keystrokes', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(55));
-    console.log('  NexaVault Behavior Analytics API (Node.js)');
+    console.log('  KAVACH Behavior Analytics API (Node.js)');
     console.log('='.repeat(55));
     console.log(`\n  Server running on http://localhost:${PORT}`);
     console.log('\n  Endpoints:');

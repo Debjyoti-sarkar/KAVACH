@@ -1,8 +1,8 @@
-# NexaVault Behavior Analysis System
+# KAVACH Behavior Analysis System
 
 ## Overview
 
-The Behavior Analysis System provides real-time fraud detection and user behavior profiling for the NexaVault banking application. It uses a combination of rule-based analysis and machine learning to detect unusual payment patterns and trigger re-authentication when necessary.
+The Behavior Analysis System provides real-time fraud detection and user behavior profiling for the KAVACH banking application. It uses a combination of rule-based analysis and machine learning to detect unusual payment patterns and trigger re-authentication when necessary.
 
 ## Architecture
 
@@ -84,9 +84,9 @@ The Behavior Analysis System provides real-time fraud detection and user behavio
 
    Add to `.env`:
    ```
-   MONGODB_URI=mongodb://localhost:27017/nexavault
+   MONGODB_URI=mongodb://localhost:27017/kavach
    # Or for MongoDB Atlas:
-   # MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/nexavault
+   # MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/kavach
    ```
 
 3. **Install Dependencies**:
@@ -450,4 +450,4 @@ When adding new risk factors:
 
 ## License
 
-MIT License - Part of NexaVault Banking Application
+MIT License - Part of KAVACH Banking Application

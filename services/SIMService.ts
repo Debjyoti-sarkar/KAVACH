@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CryptoJS from 'crypto-js';
 
 const SIM_SERIAL_KEY = 'secure_sim_serial_hash';
-const SIM_REGISTERED_KEY = '@nexavault_sim_registered';
+const SIM_REGISTERED_KEY = '@kavach_sim_registered';
 
 interface SIMInfo {
   serialNumber: string | null;
@@ -34,7 +34,7 @@ class SIMService {
         PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
         {
           title: 'Phone State Permission',
-          message: 'NEXAVAULT needs access to your phone state for SIM verification to protect your account.',
+          message: 'KAVACH needs access to your phone state for SIM verification to protect your account.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',

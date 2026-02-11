@@ -19,7 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Spacing,
   BorderRadius,
-  NexaVaultColors,
+  KAVACHColors,
   Shadows,
 } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootNavigator";
@@ -67,17 +67,17 @@ function ContactCard({
         styles.contactCard,
         {
           backgroundColor: isSelected
-            ? NexaVaultColors.primary + "15"
+            ? KAVACHColors.primary + "15"
             : theme.card,
-          borderColor: isSelected ? NexaVaultColors.primary : theme.border,
+          borderColor: isSelected ? KAVACHColors.primary : theme.border,
         },
         animatedStyle,
       ]}
     >
       <View
-        style={[styles.avatar, { backgroundColor: NexaVaultColors.primary + "30" }]}
+        style={[styles.avatar, { backgroundColor: KAVACHColors.primary + "30" }]}
       >
-        <ThemedText style={[styles.avatarText, { color: NexaVaultColors.primary }]}>
+        <ThemedText style={[styles.avatarText, { color: KAVACHColors.primary }]}>
           {contact.avatar}
         </ThemedText>
       </View>
@@ -90,7 +90,7 @@ function ContactCard({
       </View>
 
       {isSelected ? (
-        <Feather name="check-circle" size={20} color={NexaVaultColors.primary} />
+        <Feather name="check-circle" size={20} color={KAVACHColors.primary} />
       ) : null}
     </AnimatedPressable>
   );
@@ -287,10 +287,10 @@ export default function SendMoneyScreen() {
           <View
             style={[
               styles.confirmIcon,
-              { backgroundColor: NexaVaultColors.primary + "15" },
+              { backgroundColor: KAVACHColors.primary + "15" },
             ]}
           >
-            <Feather name="send" size={48} color={NexaVaultColors.primary} />
+            <Feather name="send" size={48} color={KAVACHColors.primary} />
           </View>
 
           <ThemedText type="h3" style={styles.confirmTitle}>
@@ -317,7 +317,7 @@ export default function SendMoneyScreen() {
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
                 Amount
               </ThemedText>
-              <ThemedText type="h2" style={{ color: NexaVaultColors.primary }}>
+              <ThemedText type="h2" style={{ color: KAVACHColors.primary }}>
                 ₹ {parseFloat(amount).toLocaleString("en-IN")}
               </ThemedText>
             </View>
@@ -339,7 +339,7 @@ export default function SendMoneyScreen() {
             <Button
               onPress={handleConfirmPayment}
               disabled={isProcessing}
-              style={{ backgroundColor: NexaVaultColors.primary, flex: 1 }}
+              style={{ backgroundColor: KAVACHColors.primary, flex: 1 }}
             >
               {isProcessing ? "Processing..." : t("confirm")}
             </Button>
@@ -418,12 +418,12 @@ export default function SendMoneyScreen() {
 
         <Pressable
           onPress={() => navigation.navigate("QRScanner")}
-          style={[styles.qrButton, { borderColor: NexaVaultColors.primary }]}
+          style={[styles.qrButton, { borderColor: KAVACHColors.primary }]}
         >
-          <Feather name="camera" size={20} color={NexaVaultColors.primary} />
+          <Feather name="camera" size={20} color={KAVACHColors.primary} />
           <ThemedText
             style={{
-              color: NexaVaultColors.primary,
+              color: KAVACHColors.primary,
               marginLeft: Spacing.sm,
             }}
           >
@@ -485,7 +485,7 @@ export default function SendMoneyScreen() {
         onPress={handleReviewPayment}
         disabled={!recipient || !amount}
         style={{
-          backgroundColor: NexaVaultColors.primary,
+          backgroundColor: KAVACHColors.primary,
           marginTop: Spacing.xl,
         }}
       >

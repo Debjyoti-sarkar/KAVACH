@@ -167,7 +167,7 @@ export default function RootNavigator() {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          headerTitle: () => <HeaderTitle title="NEXAVAULT" />,
+          headerTitle: () => <HeaderTitle title="KAVACH" />,
           headerBackVisible: false,
           gestureEnabled: false,
         }}

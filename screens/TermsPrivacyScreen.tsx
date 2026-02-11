@@ -4,7 +4,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, NexaVaultColors } from "@/constants/theme";
+import { Spacing, BorderRadius, KAVACHColors } from "@/constants/theme";
 
 export default function TermsPrivacyScreen() {
   const { theme } = useTheme();
@@ -12,7 +12,7 @@ export default function TermsPrivacyScreen() {
   const sections = [
     {
       title: "1. Terms of Service",
-      content: `By using NexaVault, you agree to these terms. NexaVault is a digital payment platform that enables secure money transfers, bill payments, and financial management.
+      content: `By using KAVACH, you agree to these terms. KAVACH is a digital payment platform that enables secure money transfers, bill payments, and financial management.
 
 Key Terms:
 • You must be 18+ years old to use this service
@@ -108,8 +108,8 @@ Continued use after changes constitutes acceptance.`
       contentContainerStyle={styles.content}
     >
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: NexaVaultColors.primary + "15" }]}>
-          <Feather name="file-text" size={32} color={NexaVaultColors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: KAVACHColors.primary + "15" }]}>
+          <Feather name="file-text" size={32} color={KAVACHColors.primary} />
         </View>
         <ThemedText type="h3" style={styles.title}>Terms & Privacy</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -127,13 +127,13 @@ Continued use after changes constitutes acceptance.`
       ))}
 
       {/* Contact for Questions */}
-      <View style={[styles.contactCard, { backgroundColor: NexaVaultColors.info + "10" }]}>
-        <Feather name="help-circle" size={24} color={NexaVaultColors.info} />
+      <View style={[styles.contactCard, { backgroundColor: KAVACHColors.info + "10" }]}>
+        <Feather name="help-circle" size={24} color={KAVACHColors.info} />
         <View style={styles.contactText}>
           <ThemedText style={{ fontWeight: "500" }}>Questions about these terms?</ThemedText>
-          <Pressable onPress={() => Linking.openURL("mailto:legal@nexavault.com")}>
-            <ThemedText style={{ color: NexaVaultColors.primary }}>
-              Contact legal@nexavault.com
+          <Pressable onPress={() => Linking.openURL("mailto:legal@kavach.com")}>
+            <ThemedText style={{ color: KAVACHColors.primary }}>
+              Contact legal@kavach.com
             </ThemedText>
           </Pressable>
         </View>
@@ -142,7 +142,7 @@ Continued use after changes constitutes acceptance.`
       {/* Footer */}
       <View style={styles.footer}>
         <ThemedText type="caption" style={{ color: theme.textSecondary, textAlign: "center" }}>
-          © 2025 NexaVault Financial Services
+          © 2025 KAVACH Financial Services
         </ThemedText>
         <ThemedText type="caption" style={{ color: theme.textSecondary, textAlign: "center" }}>
           Regulated by Reserve Bank of India

@@ -32,7 +32,7 @@ import * as Haptics from 'expo-haptics';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius, NexaVaultColors } from '@/constants/theme';
+import { Spacing, BorderRadius, KAVACHColors } from '@/constants/theme';
 import { ScreenKeyboardAwareScrollView } from '@/components/ScreenKeyboardAwareScrollView';
 import realTimeSMSMonitor, { SMSFraudRecord, FraudAnalysis } from '@/services/RealTimeSMSMonitor';
 
@@ -160,7 +160,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
 
     Alert.alert(
       'Sender Blocked',
-      `${record.sms.sender} has been blocked in NexaVault.\n\nWould you like to also block in your SMS app?`,
+      `${record.sms.sender} has been blocked in KAVACH.\n\nWould you like to also block in your SMS app?`,
       [
         { text: 'No, Done', style: 'cancel', onPress: () => handleDone('blocked') },
         {
@@ -216,7 +216,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
           onPress: async () => {
             try {
               await Share.share({
-                message: `FRAUD SMS REPORT\n\nFrom: ${record.sms.sender}\nMessage: ${record.sms.body}\n\nRisk Score: ${record.analysis.riskScore}%\nDetected by NexaVault`
+                message: `FRAUD SMS REPORT\n\nFrom: ${record.sms.sender}\nMessage: ${record.sms.body}\n\nRisk Score: ${record.analysis.riskScore}%\nDetected by KAVACH`
               });
             } catch (e) {
               console.log('Share failed');
@@ -278,7 +278,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
   const storeFeedback = async (record: SMSFraudRecord, userVerdict: 'safe' | 'fraud') => {
     try {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const stored = await AsyncStorage.getItem('@nexavault_ml_feedback');
+      const stored = await AsyncStorage.getItem('@kavach_ml_feedback');
       const feedback = stored ? JSON.parse(stored) : [];
 
       feedback.push({
@@ -292,7 +292,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
 
       // Keep last 500 feedback entries
       const trimmed = feedback.slice(-500);
-      await AsyncStorage.setItem('@nexavault_ml_feedback', JSON.stringify(trimmed));
+      await AsyncStorage.setItem('@kavach_ml_feedback', JSON.stringify(trimmed));
     } catch (e) {
       console.log('Error storing feedback:', e);
     }
@@ -310,9 +310,9 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
   };
 
   const getRiskColor = (score: number) => {
-    if (score >= 70) return NexaVaultColors.sos;
-    if (score >= 40) return NexaVaultColors.warning;
-    return NexaVaultColors.success;
+    if (score >= 70) return KAVACHColors.sos;
+    if (score >= 40) return KAVACHColors.warning;
+    return KAVACHColors.success;
   };
 
   const getRiskLabel = (score: number) => {
@@ -324,7 +324,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
   if (isLoading || !record) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundDefault }]}>
-        <Feather name="shield" size={48} color={NexaVaultColors.primary} />
+        <Feather name="shield" size={48} color={KAVACHColors.primary} />
         <ThemedText type="small" style={{ marginTop: Spacing.md }}>
           Loading alert details...
         </ThemedText>
@@ -458,20 +458,20 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
       {(record.analysis.urlsFound.length > 0 || record.analysis.otpDetected) && (
         <Animated.View
           entering={FadeInDown.delay(500).duration(500)}
-          style={[styles.additionalCard, { backgroundColor: NexaVaultColors.sos + '10' }]}
+          style={[styles.additionalCard, { backgroundColor: KAVACHColors.sos + '10' }]}
         >
           {record.analysis.urlsFound.length > 0 && (
             <View style={styles.additionalItem}>
-              <Feather name="link" size={16} color={NexaVaultColors.sos} />
-              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: NexaVaultColors.sos }}>
+              <Feather name="link" size={16} color={KAVACHColors.sos} />
+              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: KAVACHColors.sos }}>
                 Contains {record.analysis.urlsFound.length} suspicious link(s) - DO NOT CLICK
               </ThemedText>
             </View>
           )}
           {record.analysis.otpDetected && (
             <View style={styles.additionalItem}>
-              <Feather name="key" size={16} color={NexaVaultColors.sos} />
-              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: NexaVaultColors.sos }}>
+              <Feather name="key" size={16} color={KAVACHColors.sos} />
+              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: KAVACHColors.sos }}>
                 OTP/PIN request detected - NEVER SHARE
               </ThemedText>
             </View>
@@ -510,11 +510,11 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
         {/* Secondary Actions */}
         <View style={styles.secondaryActions}>
           <Pressable
-            style={[styles.secondaryButton, { borderColor: NexaVaultColors.success }]}
+            style={[styles.secondaryButton, { borderColor: KAVACHColors.success }]}
             onPress={handleMarkSafe}
           >
-            <Feather name="check-circle" size={18} color={NexaVaultColors.success} />
-            <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: NexaVaultColors.success }}>
+            <Feather name="check-circle" size={18} color={KAVACHColors.success} />
+            <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: KAVACHColors.success }}>
               Mark as Safe
             </ThemedText>
           </Pressable>
@@ -537,7 +537,7 @@ export default function FraudAlertScreen({ route, navigation }: FraudAlertScreen
         style={[styles.tipsCard, { backgroundColor: theme.backgroundSecondary }]}
       >
         <View style={styles.tipsHeader}>
-          <Feather name="shield" size={16} color={NexaVaultColors.primary} />
+          <Feather name="shield" size={16} color={KAVACHColors.primary} />
           <ThemedText type="caption" style={{ marginLeft: Spacing.sm, fontWeight: '600' }}>
             Safety Tips
           </ThemedText>
@@ -665,10 +665,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md
   },
   blockButton: {
-    backgroundColor: NexaVaultColors.sos
+    backgroundColor: KAVACHColors.sos
   },
   reportButton: {
-    backgroundColor: NexaVaultColors.warning
+    backgroundColor: KAVACHColors.warning
   },
   actionButtonText: {
     color: '#FFFFFF',

@@ -16,7 +16,7 @@ export const languages: LanguageOption[] = [
 
 export const translations: Record<Language, Record<string, string>> = {
   en: {
-    appName: "NEXAVAULT",
+    appName: "KAVACH",
     tagline: "Security in your hands",
     taglineNative: "सुरक्षा आपके हात में",
     selectLanguage: "Select Your Language",
@@ -111,7 +111,7 @@ export const translations: Record<Language, Record<string, string>> = {
     noVideosAvailable: "No videos available in this language for this category.",
   },
   hi: {
-    appName: "NEXAVAULT",
+    appName: "KAVACH",
     tagline: "सुरक्षा आपके हात में",
     taglineNative: "Security in your hands",
     selectLanguage: "अपनी भाषा चुनें",
@@ -206,7 +206,7 @@ export const translations: Record<Language, Record<string, string>> = {
     noVideosAvailable: "इस श्रेणी के लिए इस भाषा में कोई वीडियो उपलब्ध नहीं है।",
   },
   or: {
-    appName: "NEXAVAULT",
+    appName: "KAVACH",
     tagline: "ନିରାପତ୍ତା ଆପଣଙ୍କ ହାତରେ",
     taglineNative: "Security in your hands",
     selectLanguage: "ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ",
@@ -301,7 +301,7 @@ export const translations: Record<Language, Record<string, string>> = {
     noVideosAvailable: "ଏହି ଶ୍ରେଣୀ ପାଇଁ ଏହି ଭାଷାରେ କୌଣସି ଭିଡିଓ ଉପଲବ୍ଧ ନାହିଁ।",
   },
   ta: {
-    appName: "NEXAVAULT",
+    appName: "KAVACH",
     tagline: "பாதுகாப்பு உங்கள் கைகளில்",
     taglineNative: "Security in your hands",
     selectLanguage: "உங்கள் மொழியைத் தேர்ந்தெடுங்கள்",
