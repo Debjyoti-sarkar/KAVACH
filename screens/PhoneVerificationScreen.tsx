@@ -171,6 +171,8 @@ export default function PhoneVerificationScreen() {
     }
   };
 
+  const otpInputRef = useRef<TextInput>(null);
+
   return (
     <ScreenKeyboardAwareScrollView contentContainerStyle={styles.container}>
       {/* Firebase Recaptcha Modal - Only render on native platforms when OTP bypass is disabled */}
@@ -238,7 +240,6 @@ export default function PhoneVerificationScreen() {
             {loading ? <ActivityIndicator color="#FFFFFF" /> : "Send OTP"}
           </Button>
 
-          {/* Recaptcha notice */}
           <View style={styles.recaptchaNotice}>
             <FirebaseRecaptchaBanner />
           </View>
@@ -253,32 +254,39 @@ export default function PhoneVerificationScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.otpContainer}>
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.otpBox,
-                  {
-                    backgroundColor: theme.card,
-                    borderColor: otp.length === index ? KAVACHColors.primary : theme.border,
-                    borderWidth: otp.length === index ? 2 : 1
-                  }
-                ]}
-              >
-                <ThemedText type="h3">{otp[index] || ""}</ThemedText>
-              </View>
-            ))}
-          </View>
+          <Pressable
+            style={{ alignItems: "center" }}
+            onPress={() => otpInputRef.current?.focus()}
+          >
+            <View style={styles.otpContainer}>
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.otpBox,
+                    {
+                      backgroundColor: theme.card,
+                      borderColor: otp.length === index ? KAVACHColors.primary : theme.border,
+                      borderWidth: otp.length === index ? 2 : 1
+                    }
+                  ]}
+                >
+                  <ThemedText type="h3">{otp[index] || ""}</ThemedText>
+                </View>
+              ))}
+            </View>
 
-          <TextInput
-            style={styles.hiddenInput}
-            value={otp}
-            onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ""))}
-            keyboardType="number-pad"
-            maxLength={6}
-            autoFocus
-          />
+            <TextInput
+              ref={otpInputRef}
+              style={styles.hiddenInput}
+              value={otp}
+              onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ""))}
+              keyboardType={Platform.OS === 'web' ? 'numeric' : 'number-pad'}
+              inputMode={Platform.OS === 'web' ? 'numeric' : undefined}
+              maxLength={6}
+              autoFocus
+            />
+          </Pressable>
 
           <Button
             onPress={handleVerifyOtp}

@@ -324,17 +324,19 @@ export default function RootNavigator() {
         }}
       />
 
-      <Stack.Screen
-        name="SMSFraudDashboard"
-        component={SMSFraudDashboard}
-        options={{ headerTitle: "SMS Protection" }}
+   <Stack.Screen
+  name="SMSFraudDashboard"
+  component={SMSFraudDashboard}
+  options={{ headerTitle: "SMS Protection" }}
+/>
 
-      {/* Merged NexaVault Features */}
-      <Stack.Screen
-        name="OtpFraudScanner"
-        component={OtpFraudScannerScreen}
-        options={{ headerTitle: "OTP Fraud Scanner" }}
-      />
+{/* Merged NexaVault Features */}
+
+<Stack.Screen
+  name="OtpFraudScanner"
+  component={OtpFraudScannerScreen}
+  options={{ headerTitle: "OTP Fraud Scanner" }}
+/>
 
       <Stack.Screen
         name="LoanDashboard"
@@ -375,7 +377,7 @@ export default function RootNavigator() {
         component={SpamDetectionScreen}
         options={{ headerTitle: "Spam Detection" }}
       />
-      />
+      
 
       <Stack.Screen
         name="UpiLearning"
