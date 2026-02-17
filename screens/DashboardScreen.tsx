@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,6 +26,8 @@ import { Spacing, BorderRadius, KAVACHColors, Shadows } from "@/constants/theme"
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+// Responsive tile image size for different breakpoints (web + native)
+const TILE_IMAGE_SIZE = SCREEN_WIDTH < 600 ? 56 : SCREEN_WIDTH < 900 ? 72 : 80;
 const MENU_ITEM_SIZE = 70;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -186,7 +188,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
             >
-              <Feather name="mic" size={28} color="#FFF" />
+              <Image source={require("../assets/images/voice.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>VOICE ASSISTANT</ThemedText>
             </Pressable>
 
@@ -197,7 +199,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#FF9800" }]}
             >
-              <Feather name="camera" size={28} color="#FFF" />
+              <Image source={require("../assets/images/scanner.webp")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>Scanner</ThemedText>
             </Pressable>
 
@@ -208,7 +210,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#FFC107" }]}
             >
-              <Feather name="clock" size={28} color="#FFF" />
+              <Image source={require("../assets/images/behavior.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>RECENT{"\n"}ACTIVITY</ThemedText>
             </Pressable>
           </View>
@@ -224,7 +226,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#4CAF50" }]}
             >
-              <Feather name="search" size={28} color="#FFF" />
+              <Image source={require("../assets/images/malware.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>SCAN MESSAGE{"\n"}FOR FRAUD</ThemedText>
             </Pressable>
 
@@ -237,7 +239,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
             >
-              <Feather name="send" size={28} color="#FFF" />
+              <Image source={require("../assets/images/send_money.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>SEND MONEY</ThemedText>
             </Pressable>
 
@@ -248,7 +250,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#03A9F4" }]}
             >
-              <Feather name="credit-card" size={28} color="#FFF" />
+              <Image source={require("../assets/images/bank.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>Balance</ThemedText>
             </Pressable>
           </View>
@@ -267,7 +269,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#9C27B0" }]}
             >
-              <Feather name="shield" size={28} color="#FFF" />
+              <Image source={require("../assets/images/security_dashboard.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>SECURITY{"\n"}DASHBOARD</ThemedText>
             </Pressable>
 
@@ -278,7 +280,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#673AB7" }]}
             >
-              <Feather name="activity" size={28} color="#FFF" />
+              <Image source={require("../assets/images/behavior.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>BEHAVIOR{"\n"}ANALYTICS</ThemedText>
             </Pressable>
 
@@ -289,7 +291,7 @@ export default function DashboardScreen() {
               }}
               style={[styles.controlButton, { backgroundColor: "#00BCD4" }]}
             >
-              <Feather name="maximize" size={28} color="#FFF" />
+              <Image source={require("../assets/images/qr_scanner.avif")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
               <ThemedText style={styles.controlLabel}>QR{"\n"}SCANNER</ThemedText>
             </Pressable>
           </View>
@@ -536,6 +538,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginTop: Spacing.xs,
+  },
+  tileImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginBottom: 10,
   },
   bottomActions: {
     flexDirection: "row",
