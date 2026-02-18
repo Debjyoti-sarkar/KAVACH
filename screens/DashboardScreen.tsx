@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent, Image } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Dimensions, ScrollView, GestureResponderEvent, NativeSyntheticEvent, NativeScrollEvent, Image, ImageBackground, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useTTS } from "@/hooks/useTTS";
+import { LinearGradient } from "expo-linear-gradient";
 
 import Animated, {
   useAnimatedStyle,
@@ -116,6 +117,53 @@ export default function DashboardScreen() {
     );
   }
 
+  /* ---------------------------- FEATURE CARD COMPONENT --------------------------- */
+  function FeatureCard({
+    source,
+    label,
+    onPress,
+  }: {
+    source: any;
+    label: string;
+    onPress: () => void;
+  }) {
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+    }));
+
+    return (
+      <AnimatedPressable
+        onPress={onPress}
+        onPressIn={() => {
+          if (Platform.OS === "web") {
+            scale.value = withTiming(1.02, { duration: 300, easing: Easing.ease });
+          } else {
+            scale.value = withSpring(0.98);
+          }
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1);
+        }}
+        style={[styles.featureCard, animatedStyle]}
+      >
+        <ImageBackground
+          source={source}
+          style={styles.featureImageBackground}
+          resizeMode="cover"
+        >
+          <LinearGradient
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.8)"]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.featureOverlay}
+          />
+          <ThemedText style={styles.featureLabel}>{label}</ThemedText>
+        </ImageBackground>
+      </AnimatedPressable>
+    );
+  }
+
   /* --------------------------- MAIN SCREEN ---------------------------- */
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
@@ -180,79 +228,61 @@ export default function DashboardScreen() {
 
         {/* ----------------------------- VOICE & NETWORK CONTROLS ------------------------------ */}
         <View style={styles.section}>
-          <View style={styles.controlsRow}>
-            <Pressable
+          <View style={styles.featureCardsRow}>
+            <FeatureCard
+              source={require("../assets/images/voice-assistant.avif")}
+              label="VOICE ASSISTANT"
               onPress={() => {
                 speak("Voice Assistant");
                 navigation.navigate("VoiceAssistant");
               }}
-              style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
-            >
-              <Image source={require("../assets/images/voice.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>VOICE ASSISTANT</ThemedText>
-            </Pressable>
-
-            <Pressable
+            />
+            <FeatureCard
+              source={require("../assets/images/scanner.webp")}
+              label="SCANNER"
               onPress={() => {
                 speak("Scanner");
                 navigation.navigate("OfflineOtp");
               }}
-              style={[styles.controlButton, { backgroundColor: "#FF9800" }]}
-            >
-              <Image source={require("../assets/images/scanner.webp")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>Scanner</ThemedText>
-            </Pressable>
-
-            <Pressable
+            />
+            <FeatureCard
+              source={require("../assets/images/behavior.jpg")}
+              label="RECENT ACTIVITY"
               onPress={() => {
                 speak("Recent Activity");
                 navigation.navigate("TransactionHistory");
               }}
-              style={[styles.controlButton, { backgroundColor: "#FFC107" }]}
-            >
-              <Image source={require("../assets/images/behavior.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>RECENT{"\n"}ACTIVITY</ThemedText>
-            </Pressable>
+            />
           </View>
         </View>
 
         {/* ----------------------------- QUICK ACTIONS ------------------------------ */}
         <View style={styles.section}>
-          <View style={styles.controlsRow}>
-            <Pressable
+          <View style={styles.featureCardsRow}>
+            <FeatureCard
+              source={require("../assets/images/malware.jpg")}
+              label="SCAN MESSAGE FOR FRAUD"
               onPress={() => {
                 speak("Scan for Fraud");
                 navigation.navigate("FraudScan");
               }}
-              style={[styles.controlButton, { backgroundColor: "#4CAF50" }]}
-            >
-              <Image source={require("../assets/images/malware.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>SCAN MESSAGE{"\n"}FOR FRAUD</ThemedText>
-            </Pressable>
-
-            <Pressable
-              onPressIn={handleTapStart}
-              onPressOut={(e) => handleTapEnd(e, 'send-money-button')}
+            />
+            <FeatureCard
+              source={require("../assets/images/feature2.png")}
+              label="SEND MONEY"
               onPress={() => {
                 speak("Send Money");
                 navigation.navigate("SendMoney");
               }}
-              style={[styles.controlButton, { backgroundColor: "#2196F3" }]}
-            >
-              <Image source={require("../assets/images/send_money.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>SEND MONEY</ThemedText>
-            </Pressable>
-
-            <Pressable
+            />
+            <FeatureCard
+              source={require("../assets/images/bank.jpg")}
+              label="BALANCE"
               onPress={() => {
                 speak("Balance");
                 navigation.navigate("Balance");
               }}
-              style={[styles.controlButton, { backgroundColor: "#03A9F4" }]}
-            >
-              <Image source={require("../assets/images/bank.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>Balance</ThemedText>
-            </Pressable>
+            />
           </View>
         </View>
 
@@ -261,39 +291,31 @@ export default function DashboardScreen() {
           <View style={styles.sectionHeader}>
             <ThemedText type="h4" style={{ color: "#1A1A1A" }}>Security & Analytics</ThemedText>
           </View>
-          <View style={styles.controlsRow}>
-            <Pressable
+          <View style={styles.featureCardsRow}>
+            <FeatureCard
+              source={require("../assets/images/security_dashboard.jpg")}
+              label="SECURITY DASHBOARD"
               onPress={() => {
                 speak("Security Dashboard");
                 navigation.navigate("SecurityDashboard");
               }}
-              style={[styles.controlButton, { backgroundColor: "#9C27B0" }]}
-            >
-              <Image source={require("../assets/images/security_dashboard.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>SECURITY{"\n"}DASHBOARD</ThemedText>
-            </Pressable>
-
-            <Pressable
+            />
+            <FeatureCard
+              source={require("../assets/images/behavior.jpg")}
+              label="BEHAVIOR ANALYTICS"
               onPress={() => {
                 speak("Behavior Analytics");
                 navigation.navigate("BehaviorAnalytics");
               }}
-              style={[styles.controlButton, { backgroundColor: "#673AB7" }]}
-            >
-              <Image source={require("../assets/images/behavior.jpg")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>BEHAVIOR{"\n"}ANALYTICS</ThemedText>
-            </Pressable>
-
-            <Pressable
+            />
+            <FeatureCard
+              source={require("../assets/images/qr_scanner.avif")}
+              label="QR SCANNER"
               onPress={() => {
                 speak("QR Scanner");
                 navigation.navigate("QRScanner");
               }}
-              style={[styles.controlButton, { backgroundColor: "#00BCD4" }]}
-            >
-              <Image source={require("../assets/images/qr_scanner.avif")} style={[styles.tileImage, { width: TILE_IMAGE_SIZE, height: TILE_IMAGE_SIZE }]} resizeMode="contain" />
-              <ThemedText style={styles.controlLabel}>QR{"\n"}SCANNER</ThemedText>
-            </Pressable>
+            />
           </View>
         </View>
 
@@ -522,6 +544,43 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: "row",
     gap: Spacing.sm,
+  },
+  featureCardsRow: {
+    flexDirection: "row",
+    gap: Spacing.lg,
+    justifyContent: "space-between",
+  },
+  featureCard: {
+    flex: 1,
+    height: 280,
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#F5F7FA",
+    ...Shadows.md,
+  },
+  featureImageBackground: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "flex-end",
+  },
+  featureOverlay: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    bottom: 0,
+    left: 0,
+    zIndex: 1,
+  },
+  featureLabel: {
+    position: "relative",
+    bottom: 20,
+    textAlign: "center",
+    color: "#FFF",
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 1,
+    zIndex: 10,
+    paddingBottom: 10,
   },
   controlButton: {
     flex: 1,
